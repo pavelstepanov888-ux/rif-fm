@@ -1,0 +1,108 @@
+[
+  {
+    "name": "cover-story.png",
+    "nodeId": "815:6273"
+  },
+  {
+    "name": "cover-news.png",
+    "nodeId": "815:6741"
+  },
+  {
+    "name": "cover-horoscope.png",
+    "nodeId": "815:7443"
+  },
+  {
+    "name": "cover-poetry.png",
+    "nodeId": "815:6975"
+  },
+  {
+    "name": "seabed.png",
+    "nodeId": "885:299096"
+  },
+  {
+    "name": "host.png",
+    "fromNode": "841:24276"
+  },
+  {
+    "name": "guest.png",
+    "fromNode": "841:24276"
+  },
+  {
+    "name": "icon-play.svg",
+    "fromNode": "841:24276"
+  },
+  {
+    "name": "about-art.png",
+    "fromNode": "639:18787"
+  },
+  {
+    "name": "seagulls.png",
+    "fromNode": "639:18787"
+  },
+  {
+    "name": "underline.svg",
+    "fromNode": "639:18788"
+  },
+  {
+    "name": "icon-arrow.svg",
+    "fromNode": "639:18788"
+  },
+  {
+    "name": "icon-mail.svg",
+    "fromNode": "639:18788"
+  },
+  {
+    "name": "icon-max.svg",
+    "fromNode": "639:18788"
+  },
+  {
+    "name": "icon-dzen.svg",
+    "fromNode": "639:18788"
+  },
+  {
+    "name": "icon-rutube.svg",
+    "fromNode": "639:18788"
+  },
+  {
+    "name": "icon-vk.svg",
+    "fromNode": "639:18788"
+  },
+  {
+    "name": "icon-volume.svg",
+    "fromNode": "639:18791"
+  },
+  {
+    "name": "icon-video.svg",
+    "fromNode": "639:18791"
+  },
+  {
+    "name": "logo-header.svg",
+    "nodeId": "331:1022",
+    "format": "svg",
+    "paths": 12,
+    "embeddedRasterImages": 1,
+    "viewBox": "0 0 135 64",
+    "transparentBackground": true,
+    "processing": "Removed ancestor screen backgrounds; retained original Logo group and all definitions."
+  },
+  {
+    "name": "hero-art.svg",
+    "nodeId": "967:235497",
+    "format": "svg",
+    "paths": 15252,
+    "embeddedRasterImages": 62,
+    "viewBox": "0 0 661 580",
+    "transparentBackground": true,
+    "processing": "Removed ancestor screen backgrounds; retained original Logo group and all definitions."
+  },
+  {
+    "name": "logo-footer.svg",
+    "nodeId": "888:267688",
+    "format": "svg",
+    "paths": 15272,
+    "embeddedRasterImages": 62,
+    "viewBox": "0 0 394 360",
+    "transparentBackground": true,
+    "processing": "Removed ancestor screen backgrounds; retained original Logo group and all definitions."
+  }
+]
