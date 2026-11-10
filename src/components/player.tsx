@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { asset } from '../assets';
+import { liveTrack } from '../playlist-data';
 import { Button, Dialog, Heading, Hosts, Icon, LiveLabel, Volume, Wave } from './ui';
 
 type Playback = 'paused' | 'loading' | 'playing';
@@ -36,30 +37,38 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   return <RadioContext.Provider value={{ status, toggle, volume, setVolume, videoOpen, openVideo: () => setVideoOpen(true), closeVideo: () => setVideoOpen(false), notice }}>{children}{notice && <div className="notice" role="status">{notice}</div>}</RadioContext.Provider>;
 }
 
-export function PlayControl({ listen = false }: { listen?: boolean }) {
+export function PlayControl({ listen = false, minimal = false }: { listen?: boolean; minimal?: boolean }) {
   const { status, toggle } = useRadio();
-  const label = status === 'loading' ? 'Подключаемся' : status === 'playing' ? 'Пауза' : 'Слушать эфир';
-  const icon = status === 'loading' ? 'loader' : status === 'playing' ? 'pause' : 'play';
+  const label = listen ? 'Слушать эфир' : status === 'loading' ? 'Подключаемся' : status === 'playing' ? 'Пауза' : 'Слушать эфир';
+  const icon = status === 'loading' ? 'loader' : status === 'playing' ? (minimal ? 'mini-pause' : 'pause') : (minimal ? 'mini-play' : 'play');
   return <button className={listen ? 'listen-button' : 'play-control'} aria-label={label} aria-pressed={status === 'playing'} onClick={toggle}>
     <span className="play-control__disc"><Icon name={icon} className={status === 'loading' ? 'spin' : ''} /></span>{listen && <span>{label}</span>}
   </button>;
 }
 
-export function NowPlaying() {
-  return <div className="now-playing" data-figma-component="352:1067"><div className="now-playing__top"><strong>Сейчас играет</strong><Wave active /></div><p title="Sade · Smooth Operator">Sade · Smooth Operator</p></div>;
+export function NowPlaying({ onOpenPlaylist, playlistOpen }: { onOpenPlaylist: () => void; playlistOpen: boolean }) {
+  return <div className="now-playing" data-figma-component="1122:216365">
+    <img className="now-playing__cover" src={asset(liveTrack.cover)} width="48" height="48" alt="" />
+    <div className="now-playing__track"><strong>Сейчас играет</strong><p title={`${liveTrack.artist} · ${liveTrack.title}`}>{liveTrack.artist} · {liveTrack.title}</p></div>
+    <PlaylistButton className="now-playing__playlist" onOpenPlaylist={onOpenPlaylist} playlistOpen={playlistOpen} />
+  </div>;
 }
 
-export function DesktopPlayer() {
+export function PlaylistButton({ onOpenPlaylist, playlistOpen, className = '' }: { onOpenPlaylist: () => void; playlistOpen: boolean; className?: string }) {
+  return <Button variant="tertiary" icon="playlist" iconOnly className={`playlist-toggle ${className}`} aria-label="Что звучало — открыть плейлист" aria-haspopup="dialog" aria-expanded={playlistOpen} onClick={onOpenPlaylist} />;
+}
+
+export function DesktopPlayer({ onOpenPlaylist, playlistOpen }: { onOpenPlaylist: () => void; playlistOpen: boolean }) {
   const { status, volume, setVolume, openVideo } = useRadio();
-  return <aside className="desktop-player" aria-label="Плеер прямого эфира" data-figma-component="639:18791">
+  return <aside className="desktop-player" aria-label="Плеер прямого эфира" data-figma-component="1132:407372">
     <div className="desktop-player__left"><PlayControl /><div className="player-info"><strong>История одной песни</strong><span>Игорь Федоров</span></div></div>
     <Wave active={status === 'playing'} />
-    <div className="desktop-player__right"><Volume value={volume} onChange={setVolume} /><Button variant="secondary" icon="video" onClick={openVideo}>Смотреть трансляцию</Button></div>
+    <div className="desktop-player__right"><Volume value={volume} onChange={setVolume} /><div className="desktop-player__actions" data-figma-node="1137:195174"><Button variant="secondary" icon="video" onClick={openVideo}>Смотреть трансляцию</Button><PlaylistButton onOpenPlaylist={onOpenPlaylist} playlistOpen={playlistOpen} /></div></div>
   </aside>;
 }
 
 export function VideoOverlay() {
-  const { videoOpen, closeVideo, volume, setVolume } = useRadio();
+  const { videoOpen, closeVideo, volume } = useRadio();
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -72,17 +81,17 @@ export function VideoOverlay() {
     if(playing) videoRef.current?.pause();
     else void videoRef.current?.play().catch(() => setError(true));
   };
-  return <Dialog label="Видеотрансляция Риф FM" onClose={closeVideo} className="video-overlay">
-    <div className="video-overlay__header container"><img src={asset('logo-header.svg')} width="135" height="64" alt="Риф FM" /><Button variant="secondary" icon="chevron-down" iconOnly aria-label="Свернуть трансляцию" onClick={closeVideo} /></div>
-    <div className="video-overlay__body container"><div className="video-column"><div className="video-frame">
+  return <Dialog label="Видеотрансляция Риф FM" onClose={closeVideo} animated className="video-overlay">{close => <>
+    <div className="video-overlay__header container"><img src={asset('logo-header.svg')} width="135" height="64" alt="Риф FM" /><Button variant="secondary" icon="chevron-down" iconOnly aria-label="Свернуть трансляцию" onClick={close} /></div>
+    <div className="video-overlay__body container"><div className="video-overlay__grid"><div className="video-column"><div className="video-frame">
       <video ref={videoRef} src={videoUrl || undefined} poster={asset('video-poster.png')} playsInline onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onError={() => setError(true)} />
       <span className="video-badge"><i />В эфире</span>
       {!playing && <Button className="video-frame__play" size="l" icon="play" iconOnly aria-label="Воспроизвести видео" onClick={toggleVideo} />}
+    </div><div className="program-progress"><span>10:00</span><span><i /></span><span>12:00</span></div>
       {error && <p className="video-message" role="status">{videoUrl ? 'Не удалось загрузить трансляцию' : 'Видеопоток пока не подключён'}</p>}
-      <div className="video-controls"><Button icon={playing ? 'pause' : 'play'} iconOnly aria-label={playing ? 'Приостановить видео' : 'Воспроизвести видео'} onClick={toggleVideo} /><Volume value={volume} onChange={setVolume} /><Button variant="tertiary" icon="fullscreen" iconOnly aria-label="На весь экран" onClick={() => void videoRef.current?.requestFullscreen()} /></div>
-    </div><div className="program-progress"><span>10:00</span><span><i /></span><span>12:00</span></div></div>
-    <div className="video-info"><LiveLabel /><Heading first="История одной" script="песни" /><Hosts /><p>Как появилась песня, кто спел её первым и почему она до сих пор трогает. Ведущий и гость разбирают одну композицию от первой ноты до последней.</p><h3>Дальше в эфире</h3>
+    </div>
+    <div className="video-info"><div className="video-info__heading"><LiveLabel /><Heading first="История одной" script="песни" /></div><Hosts /><p>Как появилась песня, кто спел её первым и почему она до сих пор трогает. Ведущий и гость разбирают одну композицию от первой ноты до последней.</p><div className="video-up-next"><h3>Дальше в эфире</h3><div className="video-up-next__list">
       {[['12:00 – 12:30','Гороскоп','horoscope'],['12:30 – 14:00','Галерея','poetry'],['14:00 – 16:00','Лист календаря','news']].map(([time,title,cover]) => <div className="up-next" key={title}><img src={asset(`cover-${cover}.png`)} alt="" /><div><span>{time}</span><strong>{title}</strong></div></div>)}
-    </div></div>
-  </Dialog>;
+    </div></div></div></div></div>
+  </>}</Dialog>;
 }

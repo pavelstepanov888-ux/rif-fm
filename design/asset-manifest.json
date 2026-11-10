@@ -104,5 +104,167 @@
     "viewBox": "0 0 394 360",
     "transparentBackground": true,
     "processing": "Removed ancestor screen backgrounds; retained original Logo group and all definitions."
+  },
+  {
+    "name": "album-sade.jpg",
+    "nodeId": "1104:123560",
+    "fromScreen": "1103:140982",
+    "format": "jpeg",
+    "width": 600,
+    "height": 600,
+    "sha256": "1d90af5956fb12c0c28fbab7c59da605ec64f441fdf8329ec90cbfdcb1331da9",
+    "alsoUsedIn": "1137:195181 / Now Playing (identical image bytes)"
+  },
+  {
+    "name": "album-sting.jpg",
+    "nodeId": "1104:123646",
+    "fromScreen": "1103:140982",
+    "format": "jpeg",
+    "width": 600,
+    "height": 600,
+    "sha256": "a2effd13a0357abf2dc0e5dabb9ef2c306969eccc79d20490497cd7239428018"
+  },
+  {
+    "name": "album-norah-jones.jpg",
+    "nodeId": "1104:123652",
+    "fromScreen": "1103:140982",
+    "format": "jpeg",
+    "width": 600,
+    "height": 600,
+    "sha256": "dc64f4a966ab2af13e29c7e945b23434be164e397882762d2e3709aa0630652b"
+  },
+  {
+    "name": "album-chris-rea.jpg",
+    "nodeId": "1104:123658",
+    "fromScreen": "1103:140982",
+    "format": "jpeg",
+    "width": 600,
+    "height": 600,
+    "sha256": "fc1ae48b5eb1df05fe6cb0dde2c00563428e5e7831e049d29946368edb847ebb"
+  },
+  {
+    "name": "album-george-michael.jpg",
+    "nodeId": "1104:123664",
+    "fromScreen": "1103:140982",
+    "format": "jpeg",
+    "width": 600,
+    "height": 600,
+    "sha256": "a38f2957b2c8d4c0d4735b5a67127674aca4d43ca34e6b422f2c3db4f8c71fb2"
+  },
+  {
+    "name": "album-simply-red.jpg",
+    "nodeId": "1104:123670",
+    "fromScreen": "1103:140982",
+    "format": "jpeg",
+    "width": 600,
+    "height": 600,
+    "sha256": "7165e99af957af34949cadebce9914e6bc6fa8649b2718d1333aa5d334160d9e"
+  },
+  {
+    "name": "album-a-ha.jpg",
+    "nodeId": "1104:123676",
+    "fromScreen": "1103:140982",
+    "format": "jpeg",
+    "width": 600,
+    "height": 600,
+    "sha256": "d448b261aa3957b8613f5e8343dbda9431eee9a77f496afae8317a14a2965dee"
+  },
+  {
+    "name": "album-bryan-ferry.jpg",
+    "nodeId": "1104:123682",
+    "fromScreen": "1103:140982",
+    "format": "jpeg",
+    "width": 600,
+    "height": 600,
+    "sha256": "04ecbbf62f294d47051646790143032dae2da137161a27f5bf832dc2834a7dde"
+  },
+  {
+    "name": "icon-playlist.svg",
+    "nodeId": "1114:158543",
+    "fromScreen": "1137:195179",
+    "format": "svg",
+    "width": 24,
+    "height": 24,
+    "sha256": "9a71a03be8dd32660f525fb35a10940f517d6cc18aef4427b766851d0f960752"
+  },
+  {
+    "name": "icon-tab-broadcast.svg",
+    "nodeId": "1029:318814",
+    "fromComponent": "1030:316712",
+    "format": "svg",
+    "width": 16.7957,
+    "height": 16.8,
+    "viewBox": "0 0 16.7957 16.8",
+    "sha256": "68c8b5308f0ccef4b2c4142a1c303cbdb0fb92f4ad0d8077f121528f80ef64eb"
+  },
+  {
+    "name": "icon-tab-calendar.svg",
+    "nodeId": "1029:318815",
+    "fromComponent": "1030:316712",
+    "format": "svg",
+    "width": 16.1997,
+    "height": 16.2,
+    "viewBox": "0 0 16.1997 16.2",
+    "sha256": "641a393d09dd99e7c7eb31a51ec77fe1b6ae5b2d755547012d139f67c6005115"
+  },
+  {
+    "name": "icon-tab-mail.svg",
+    "nodeId": "474:368",
+    "fromComponent": "1030:316712",
+    "format": "svg",
+    "width": 24.0,
+    "height": 24.0,
+    "viewBox": "0 0 24 24",
+    "sha256": "d1cb59ab06a8d8dd491f0ba3d3af5ee5474e4504011cbf2f54eaf34b21cab49a"
+  },
+  {
+    "name": "icon-tab-more.svg",
+    "nodeId": "1029:318816",
+    "fromComponent": "1030:316712",
+    "format": "svg",
+    "width": 24.0,
+    "height": 24.0,
+    "viewBox": "0 0 24 24",
+    "sha256": "a744e781320acbdce6070a9e754b968fb6a91138653ec49028c139515cadccc4"
+  },
+  {
+    "name": "icon-mini-play.svg",
+    "nodeId": "961:213214",
+    "fromComponent": "1030:316725",
+    "format": "svg",
+    "width": 24.0,
+    "height": 24.0,
+    "viewBox": "0 0 24 24",
+    "sha256": "144129bdd7c557c1ffe5b6c9eb6e7d00b8f697241054ca75bd0ac29f30bdd1fa"
+  },
+  {
+    "name": "icon-mini-pause.svg",
+    "nodeId": "343:1180",
+    "fromComponent": "1030:316725",
+    "format": "svg",
+    "width": 24.0,
+    "height": 24.0,
+    "viewBox": "0 0 24 24",
+    "sha256": "5085985153485d523a5ad170338060fdb18aa08d69caa4933b8b161b5368560d"
+  },
+  {
+    "name": "icon-mini-video.svg",
+    "nodeId": "961:213292",
+    "fromComponent": "1030:316725",
+    "format": "svg",
+    "width": 24.0,
+    "height": 24.0,
+    "viewBox": "0 0 24 24",
+    "sha256": "ad9604b312b180c99130a0eb79c66cd8afe56cf335b8f15d2e6f9c5882676297"
+  },
+  {
+    "name": "inter-variable.woff2",
+    "directory": "fonts",
+    "format": "woff2",
+    "family": "Inter",
+    "weights": "100–900",
+    "source": "https://github.com/rsms/inter/blob/master/docs/font-files/InterVariable.woff2",
+    "licenseFile": "fonts/inter-LICENSE.txt",
+    "sha256": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3"
   }
 ]

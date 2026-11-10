@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode, type SelectHTMLAttributes } from 'react';
 import { asset } from '../assets';
 
 export function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -12,6 +12,10 @@ export function Button({ variant = 'primary', size = 'm', icon, iconRight, iconO
   return <button className={`button button--${variant} button--${size} ${iconOnly ? 'button--icon' : ''} ${className}`} {...rest}>
     {icon && <Icon name={icon} />}{children}{iconRight && <Icon name={iconRight} />}
   </button>;
+}
+
+export function Select({ label, children, className = '', ...props }: SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
+  return <div className={`select-control ${className}`}><select aria-label={label} {...props}>{children}</select><Icon name="chevron-down" /></div>;
 }
 
 const heights = [4,16,24,24,16,8,6,6,10,14,12,8,10,20,28,22,10,8,12,20,16,8,6,12,22,28,20,12,6,10,18,24,20,12,8,6,10,16,22,16,10,6,18,28];
@@ -32,7 +36,9 @@ export function Hosts() {
   </div>;
 }
 
-export function LiveLabel() { return <div className="live-label"><span />Сейчас в эфире</div>; }
+export function LiveLabel() {
+  return <div className="live-label"><span className="live-label__dot" aria-hidden="true" /><span className="live-label__text">Сейчас в эфире</span></div>;
+}
 
 export function Heading({ first, script, level = 2 }: { first: string; script: string; level?: 1 | 2 }) {
   const Tag = level === 1 ? 'h1' : 'h2';
@@ -46,14 +52,42 @@ export function Volume({ value, onChange }: { value: number; onChange: (value: n
   </div>;
 }
 
-export function Dialog({ children, label, onClose, className = '' }: { children: ReactNode; label: string; onClose: () => void; className?: string }) {
+export function Dialog({ children, label, onClose, className = '', closeOnBackdrop = true, animated = false }: { children: ReactNode | ((close: () => void) => ReactNode); label: string; onClose: () => void; className?: string; closeOnBackdrop?: boolean; animated?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const onCloseRef = useRef(onClose);
+  const closeRequested = useRef(false);
+  const completed = useRef(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [phase, setPhase] = useState(animated ? 'entering' : 'open');
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  const completeClose = () => {
+    if (completed.current) return;
+    completed.current = true;
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    onCloseRef.current();
+  };
+  const requestClose = () => {
+    if (closeRequested.current) return;
+    closeRequested.current = true;
+    if (!animated || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { completeClose(); return; }
+    setPhase('closing');
+    // transitionend normally finishes the exit; the timer handles interrupted transitions.
+    closeTimer.current = setTimeout(completeClose, 320);
+  };
   useEffect(() => {
     const dialog = ref.current!;
     const previous = document.activeElement as HTMLElement | null;
     const oldOverflow = document.body.style.overflow;
-    dialog.showModal(); document.body.style.overflow = 'hidden';
-    return () => { dialog.close(); document.body.style.overflow = oldOverflow; previous?.focus(); };
-  }, []);
-  return <dialog ref={ref} className={`dialog ${className}`} aria-label={label} onCancel={e => { e.preventDefault(); onClose(); }} onClick={e => { if(e.target === e.currentTarget) onClose(); }}>{children}</dialog>;
+    const oldRootOverflow = document.documentElement.style.overflow;
+    dialog.showModal(); document.body.style.overflow = 'hidden'; document.documentElement.style.overflow = 'hidden';
+    // Establish the visible dialog's initial style before starting the transition.
+    if (animated) dialog.getBoundingClientRect();
+    const frame = animated ? requestAnimationFrame(() => { if (!closeRequested.current) setPhase('open'); }) : null;
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+      dialog.close(); document.body.style.overflow = oldOverflow; document.documentElement.style.overflow = oldRootOverflow; previous?.focus({ preventScroll: true });
+    };
+  }, [animated]);
+  return <dialog ref={ref} className={`dialog ${animated ? 'fullscreen-dialog' : ''} ${className}`} data-phase={animated ? phase : undefined} aria-label={label} onCancel={e => { e.preventDefault(); requestClose(); }} onClick={e => { if(closeOnBackdrop && e.target === e.currentTarget) requestClose(); }} onTransitionEnd={e => { if (closeRequested.current && e.target === e.currentTarget && e.propertyName === 'opacity') completeClose(); }}>{typeof children === 'function' ? children(requestClose) : children}</dialog>;
 }

@@ -1,0 +1,16 @@
+/* Bright action colors remain independent of the quieter secondary content. */
+:root[data-prototype-version='2'] :is(.button--secondary, .button--tertiary) { color: var(--text-accent-secondary); }
+:root[data-prototype-version='2'] :is(.button--secondary, .button--tertiary) .icon { color: var(--icon-accent-secondary); }
+:root[data-prototype-version='2'] .select-control select { color: var(--text-accent-secondary); }
+:root[data-prototype-version='2'] .select-control > .icon { color: var(--icon-accent-secondary); }
+:root[data-prototype-version='2'] .volume__mute { color: var(--icon-accent-secondary); }
+:root[data-prototype-version='2'] .volume { --controls-tertiary-active: var(--icon-accent-secondary); }
+:root[data-prototype-version='2'] .socials--footer .social-button { color: var(--icon-accent-secondary); }
+:root[data-prototype-version='2'] .heading__script > img { display: none; }
+:root[data-prototype-version='2'] .slogan { color: var(--text-secondary); }
+@media (hover: hover) {
+  :root[data-prototype-version='2'] .button--tertiary:hover { color: var(--controls-tertiary-active); }
+  :root[data-prototype-version='2'] .button--tertiary:hover .icon { color: var(--icons-active); }
+}
+:root[data-prototype-version='2'] .button--tertiary:active,
+:root[data-prototype-version='2'] .button--tertiary:active .icon { color: var(--background-accent); }

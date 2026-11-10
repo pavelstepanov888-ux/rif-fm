@@ -159,3 +159,16 @@
     --program-card-radius: 20px;
   }
 }
+
+/* User-requested roles and versions from design/prototype-tokens.json. */
+:root {
+  --text-accent-secondary: var(--rif-3b8dcf);
+  --icon-accent-secondary: var(--rif-3b8dcf);
+}
+
+:root[data-prototype-version="2"] {
+  --text-secondary: #547fa2;
+  --icons-secondary: #547fa2;
+  --text-accent-secondary: #1980d4;
+  --icon-accent-secondary: #1980d4;
+}
