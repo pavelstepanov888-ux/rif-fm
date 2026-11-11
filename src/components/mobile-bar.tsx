@@ -31,34 +31,51 @@ export function MobileBar({ active, moreOpen, onMore, onOpenPlaylist, playlistOp
     const viewport = window.visualViewport;
     const element = viewportRef.current;
     if (!viewport || !element) return;
+
+    const supportsDynamicHeight = CSS.supports('height', '100dvh');
     let frame = 0;
     let previous = '';
     const update = () => {
       frame = 0;
       if (viewport.width <= 0 || viewport.height <= 0) return;
-      const values = [viewport.offsetTop, viewport.offsetLeft, viewport.width, viewport.height].map(value => `${Math.round(value * 100) / 100}px`);
+
+      const layoutViewport = document.documentElement;
+      const needsVisualBounds = !supportsDynamicHeight
+        || Math.abs(viewport.scale - 1) > 0.01
+        || Math.abs(viewport.offsetTop) > 1
+        || Math.abs(viewport.offsetLeft) > 1
+        || Math.abs(viewport.width - layoutViewport.clientWidth) > 1
+        || Math.abs(viewport.height - layoutViewport.clientHeight) > 1;
+
+      // Let CSS follow browser toolbar changes while both viewports agree.
+      const values = needsVisualBounds
+        ? [viewport.offsetTop, viewport.offsetLeft, viewport.width, viewport.height].map(value => `${Math.round(value * 100) / 100}px`)
+        : ['', '', '', ''];
       const signature = values.join('|');
       if (signature === previous) return;
       previous = signature;
       [element.style.top, element.style.left, element.style.width, element.style.height] = values;
     };
+
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     update();
     viewport.addEventListener('resize', schedule, { passive: true });
     viewport.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule, { passive: true });
+    window.addEventListener('scroll', schedule, { passive: true });
     return () => {
       if (frame) cancelAnimationFrame(frame);
       viewport.removeEventListener('resize', schedule);
       viewport.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule);
       element.style.top = element.style.left = element.style.width = element.style.height = '';
     };
   }, []);
   return <div className="mobile-bar" ref={viewportRef}>
     <div className="mobile-bar__content" data-figma-component="1030:318987">
-    <MiniPlayer onOpenPlaylist={onOpenPlaylist} playlistOpen={playlistOpen} />
-    <TabBar active={active} moreOpen={moreOpen} onMore={onMore} />
+      <MiniPlayer onOpenPlaylist={onOpenPlaylist} playlistOpen={playlistOpen} />
+      <TabBar active={active} moreOpen={moreOpen} onMore={onMore} />
     </div>
   </div>;
 }
