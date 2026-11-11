@@ -36,7 +36,8 @@
     flex: 0 0 auto;
     width: 100%;
     gap: var(--spacing-8);
-    padding: var(--spacing-48) var(--spacing-12) calc(var(--spacing-12) + env(safe-area-inset-bottom));
+    padding: var(--spacing-48) var(--spacing-12) var(--spacing-12);
+    padding-bottom: max(var(--spacing-12), env(safe-area-inset-bottom, 0px));
     background: linear-gradient(180deg, transparent 18.813%, color-mix(in srgb, var(--background-secondary) 90%, transparent) 59.29%, var(--background-secondary) 100%);
     pointer-events: none;
   }
