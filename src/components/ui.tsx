@@ -79,7 +79,10 @@ export function Dialog({ children, label, onClose, className = '', closeOnBackdr
     const previous = document.activeElement as HTMLElement | null;
     const oldOverflow = document.body.style.overflow;
     const oldRootOverflow = document.documentElement.style.overflow;
-    dialog.showModal(); document.body.style.overflow = 'hidden'; document.documentElement.style.overflow = 'hidden';
+    if (animated) dialog.autofocus = window.matchMedia('(max-width: 767px)').matches;
+    dialog.showModal();
+    if (dialog.autofocus && document.activeElement !== dialog) dialog.focus({ preventScroll: true });
+    document.body.style.overflow = 'hidden'; document.documentElement.style.overflow = 'hidden';
     // Establish the visible dialog's initial style before starting the transition.
     if (animated) dialog.getBoundingClientRect();
     const frame = animated ? requestAnimationFrame(() => { if (!closeRequested.current) setPhase('open'); }) : null;
