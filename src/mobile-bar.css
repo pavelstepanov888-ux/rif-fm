@@ -18,26 +18,23 @@
   .footer__columns a, .footer__columns button { max-width: 100%; overflow-wrap: anywhere; }
 
   .mobile-bar {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    display: block;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    height: 100dvh;
+    inset: auto 0 0;
     z-index: 25;
     pointer-events: none;
+  }
+  .mobile-bar[data-zoomed] {
+    inset: var(--visual-viewport-bottom) auto auto var(--visual-viewport-left);
+    width: var(--visual-viewport-width);
+    transform: translateY(-100%);
   }
   .mobile-bar__content {
     display: flex;
     flex-direction: column;
-    flex: 0 0 auto;
-    width: 100%;
     gap: var(--spacing-8);
-    padding: var(--spacing-48) var(--spacing-12) var(--spacing-12);
-    padding-bottom: max(var(--spacing-12), env(safe-area-inset-bottom, 0px));
+    /* Keep the tab offset stable as Chrome on iOS changes its safe area. */
+    padding: var(--spacing-48) var(--spacing-12) var(--spacing-16);
     background: linear-gradient(180deg, transparent 18.813%, color-mix(in srgb, var(--background-secondary) 90%, transparent) 59.29%, var(--background-secondary) 100%);
     pointer-events: none;
   }
