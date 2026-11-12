@@ -1,17 +1,25 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, type MouseEvent } from 'react';
 import { Icon } from './ui';
 import { PlayControl, PlaylistButton, useRadio } from './player';
 
-export type MobileTab = 'air' | 'schedule' | 'contacts' | 'more';
+type TabBarProps = {
+  active: 'air' | 'schedule' | 'more';
+  moreOpen: boolean;
+  onMore: () => void;
+  writeToAirOpen: boolean;
+  onWriteToAir: (event: MouseEvent<HTMLButtonElement>) => void;
+};
 const tabs = [
   { id: 'air', label: 'Эфир', icon: 'tab-broadcast' },
   { id: 'schedule', label: 'Расписание', icon: 'tab-calendar' },
-  { id: 'contacts', label: 'Контакты', icon: 'tab-mail' },
 ] as const;
 
-export function TabBar({ active, moreOpen, onMore }: { active: MobileTab; moreOpen: boolean; onMore: () => void }) {
+function TabBar({ active, moreOpen, onMore, writeToAirOpen, onWriteToAir }: TabBarProps) {
   return <nav className="tab-bar" aria-label="Мобильная навигация" data-figma-component="1030:316712">
     {tabs.map(tab => <a key={tab.id} className="tab-bar__item" href={`#${tab.id}`} aria-current={active === tab.id ? 'page' : undefined} data-figma-component="1030:316627"><span className="tab-bar__icon"><Icon name={tab.icon} /></span><span>{tab.label}</span></a>)}
+    <button type="button" className="tab-bar__item" aria-label="Написать в эфир" aria-haspopup="dialog" aria-expanded={writeToAirOpen} onClick={onWriteToAir}>
+      <span className="tab-bar__icon"><Icon name="chat-bubble" /></span><span>Написать</span>
+    </button>
     <button type="button" className="tab-bar__item" aria-current={active === 'more' ? 'page' : undefined} aria-haspopup="dialog" aria-expanded={moreOpen} onClick={onMore} data-figma-component="1030:316627"><span className="tab-bar__icon"><Icon name="tab-more" /></span><span>Ещё</span></button>
   </nav>;
 }
@@ -25,7 +33,7 @@ function MiniPlayer({ onOpenPlaylist, playlistOpen }: { onOpenPlaylist: () => vo
   </div>;
 }
 
-export function MobileBar({ active, moreOpen, onMore, onOpenPlaylist, playlistOpen }: { active: MobileTab; moreOpen: boolean; onMore: () => void; onOpenPlaylist: () => void; playlistOpen: boolean }) {
+export function MobileBar({ onOpenPlaylist, playlistOpen, ...tabBar }: TabBarProps & { onOpenPlaylist: () => void; playlistOpen: boolean }) {
   const barRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const bar = barRef.current;
@@ -62,7 +70,7 @@ export function MobileBar({ active, moreOpen, onMore, onOpenPlaylist, playlistOp
   return <div className="mobile-bar" ref={barRef}>
     <div className="mobile-bar__content" data-figma-component="1030:318987">
       <MiniPlayer onOpenPlaylist={onOpenPlaylist} playlistOpen={playlistOpen} />
-      <TabBar active={active} moreOpen={moreOpen} onMore={onMore} />
+      <TabBar {...tabBar} />
     </div>
   </div>;
 }

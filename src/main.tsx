@@ -6,5 +6,6 @@ import './styles.css';
 import './playlist.css';
 import './prototype.css';
 import './mobile-bar.css';
+import './write-to-air.css';
 
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
