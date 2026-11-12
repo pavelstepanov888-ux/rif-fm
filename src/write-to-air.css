@@ -84,7 +84,7 @@
 }
 
 @media (hover: hover) {
-  .write-to-air__header .button--icon:hover { background: var(--controls-secondary-active); }
+  .write-to-air__header .button--icon:hover { background: var(--controls-secondary-hover, var(--controls-secondary-active)); }
   .write-to-air__topics .button--tertiary:hover,
   :root[data-prototype-version='2'] .write-to-air__topics .button--tertiary:hover { color: var(--text-accent-secondary); }
 }
@@ -127,11 +127,12 @@
 
 .write-to-air__optional { color: var(--text-secondary); }
 
-.write-to-air__form :is(textarea, input) {
+.write-to-air__form :is(textarea, input),
+.write-to-air__message::after {
   width: 100%;
   padding: var(--spacing-12) var(--spacing-16);
   border: 1px solid var(--stroke-primary);
-  border-radius: var(--spacing-16);
+  border-radius: var(--field-radius);
   background: var(--background-secondary);
   color: var(--text-primary);
   font: inherit;
@@ -139,7 +140,26 @@
   line-height: var(--typography-p2-regular-line-height);
 }
 
-.write-to-air__form textarea { resize: vertical; }
+.write-to-air__message textarea,
+.write-to-air__message::after {
+  grid-area: 2 / 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.write-to-air__message textarea {
+  resize: none;
+  overflow: hidden;
+}
+
+.write-to-air__message::after {
+  /* Match the textarea's wrapping and keep its last empty line measurable. */
+  content: attr(data-message) ' ';
+  box-sizing: border-box;
+  visibility: hidden;
+}
+
 .write-to-air__form :is(textarea, input)::placeholder { color: var(--text-secondary); }
 :root[data-prototype-version='1'] .write-to-air__form :is(textarea, input)::placeholder { color: #87949f; opacity: 1; }
 .write-to-air__form :is(textarea, input):focus-visible {
@@ -171,6 +191,4 @@
     border-radius: var(--spacing-2);
     background: var(--icons-inverted-secondary);
   }
-
-  .write-to-air__form textarea { resize: none; }
 }

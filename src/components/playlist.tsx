@@ -1,8 +1,14 @@
 import { useRef, useState } from 'react';
 import { asset } from '../assets';
 import { getPlaylistTracks, liveDay, liveTrack, playlistDays, playlistTimeRanges } from '../playlist-data';
+import { PlaylistFilter } from './playlist-filter';
 import { PlayControl } from './player';
-import { Button, Dialog, Select } from './ui';
+import { Button, Dialog } from './ui';
+
+const dayOptions = [...playlistDays].reverse().map(day => ({
+  id: day.id,
+  label: day.id === liveDay ? 'Сегодня' : day.id === '14' ? 'Вчера' : day.label,
+}));
 
 export function PlaylistOverlay({ onClose }: { onClose: () => void }) {
   const [selectedDay, setSelectedDay] = useState(liveDay);
@@ -27,12 +33,8 @@ export function PlaylistOverlay({ onClose }: { onClose: () => void }) {
         </section>
         <div className="playlist-sidebar">
           <div className="playlist-filters" role="group" aria-label="Фильтры истории эфира" data-figma-node="1141:281288">
-            <Select id="playlist-day" label="День истории эфира" value={selectedDay} className={`playlist-filter--day ${['14', liveDay].includes(selectedDay) ? 'is-relative' : ''}`} aria-controls="playlist-history" onChange={e => { setSelectedDay(e.target.value); resetScroll(); }}>
-              {[...playlistDays].reverse().map(day => <option key={day.id} value={day.id}>{day.id === liveDay ? 'Сегодня' : day.id === '14' ? 'Вчера' : day.label}</option>)}
-            </Select>
-            <Select label="Время в эфире" value={selectedRange} className={`playlist-filter--time ${selectedRange === 'all' ? 'is-all' : ''}`} aria-controls="playlist-history" onChange={e => { setSelectedRange(e.target.value); resetScroll(); }}>
-              {playlistTimeRanges.map(range => <option key={range.id} value={range.id}>{range.label}</option>)}
-            </Select>
+            <PlaylistFilter id="playlist-day" label="День истории эфира" value={selectedDay} options={dayOptions} onChange={value => { setSelectedDay(value); resetScroll(); }} />
+            <PlaylistFilter id="playlist-time" label="Время в эфире" value={selectedRange} options={playlistTimeRanges} onChange={value => { setSelectedRange(value); resetScroll(); }} />
           </div>
           <p className="visually-hidden" role="status">{selectedLabel}, {rangeLabel}. Треков: {tracks.length}.</p>
           <div className="playlist-history" id="playlist-history" ref={list} role="region" aria-label={`Что звучало · ${selectedLabel} · ${rangeLabel}`} tabIndex={0}>

@@ -1,9 +1,12 @@
 /* Bright action colors remain independent of the quieter secondary content. */
 :root[data-prototype-version='2'] .button--secondary { border-color: transparent; }
+:root[data-prototype-version='2'] .playlist-filter__trigger {
+  --controls-secondary-background: var(--background-primary);
+  --controls-secondary-hover: var(--controls-secondary-active);
+  border-color: var(--stroke-primary);
+}
 :root[data-prototype-version='2'] .button--tertiary { color: var(--text-accent-secondary); }
 :root[data-prototype-version='2'] :is(.button--secondary, .button--tertiary) .icon { color: var(--icon-accent-secondary); }
-:root[data-prototype-version='2'] .select-control select { color: var(--text-accent-secondary); }
-:root[data-prototype-version='2'] .select-control > .icon { color: var(--icon-accent-secondary); }
 :root[data-prototype-version='2'] .volume__mute { color: var(--icon-accent-secondary); }
 :root[data-prototype-version='2'] .volume { --controls-tertiary-active: var(--icon-accent-secondary); }
 :root[data-prototype-version='2'] .socials--footer .social-button { color: var(--icon-accent-secondary); }

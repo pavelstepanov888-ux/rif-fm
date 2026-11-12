@@ -3,7 +3,6 @@ import { Icon } from './ui';
 import { PlayControl, PlaylistButton, useRadio } from './player';
 
 type TabBarProps = {
-  active: 'air' | 'schedule' | 'more';
   moreOpen: boolean;
   onMore: () => void;
   writeToAirOpen: boolean;
@@ -14,13 +13,13 @@ const tabs = [
   { id: 'schedule', label: 'Расписание', icon: 'tab-calendar' },
 ] as const;
 
-function TabBar({ active, moreOpen, onMore, writeToAirOpen, onWriteToAir }: TabBarProps) {
+function TabBar({ moreOpen, onMore, writeToAirOpen, onWriteToAir }: TabBarProps) {
   return <nav className="tab-bar" aria-label="Мобильная навигация" data-figma-component="1030:316712">
-    {tabs.map(tab => <a key={tab.id} className="tab-bar__item" href={`#${tab.id}`} aria-current={active === tab.id ? 'page' : undefined} data-figma-component="1030:316627"><span className="tab-bar__icon"><Icon name={tab.icon} /></span><span>{tab.label}</span></a>)}
+    {tabs.map(tab => <a key={tab.id} className="tab-bar__item" href={`#${tab.id}`} aria-current={tab.id === 'air' ? 'page' : undefined} data-figma-component="1030:316627"><span className="tab-bar__icon"><Icon name={tab.icon} /></span><span>{tab.label}</span></a>)}
     <button type="button" className="tab-bar__item" aria-label="Написать в эфир" aria-haspopup="dialog" aria-expanded={writeToAirOpen} onClick={onWriteToAir}>
       <span className="tab-bar__icon"><Icon name="chat-bubble" /></span><span>Написать</span>
     </button>
-    <button type="button" className="tab-bar__item" aria-current={active === 'more' ? 'page' : undefined} aria-haspopup="dialog" aria-expanded={moreOpen} onClick={onMore} data-figma-component="1030:316627"><span className="tab-bar__icon"><Icon name="tab-more" /></span><span>Ещё</span></button>
+    <button type="button" className="tab-bar__item" aria-haspopup="dialog" aria-expanded={moreOpen} onClick={onMore} data-figma-component="1030:316627"><span className="tab-bar__icon"><Icon name="tab-more" /></span><span>Ещё</span></button>
   </nav>;
 }
 

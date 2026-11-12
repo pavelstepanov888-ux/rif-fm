@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode, type SelectHTMLAttributes } from 'react';
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react';
 import { asset } from '../assets';
 
 export function Icon({ name, className = '' }: { name: string; className?: string }) {
@@ -12,10 +12,6 @@ export function Button({ variant = 'primary', size = 'm', icon, iconRight, iconO
   return <button className={`button button--${variant} button--${size} ${iconOnly ? 'button--icon' : ''} ${className}`} {...rest}>
     {icon && <Icon name={icon} />}{children}{iconRight && <Icon name={iconRight} />}
   </button>;
-}
-
-export function Select({ label, children, className = '', ...props }: SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
-  return <div className={`select-control ${className}`}><select aria-label={label} {...props}>{children}</select><Icon name="chevron-down" /></div>;
 }
 
 const heights = [4,16,24,24,16,8,6,6,10,14,12,8,10,20,28,22,10,8,12,20,16,8,6,12,22,28,20,12,6,10,18,24,20,12,8,6,10,16,22,16,10,6,18,28];

@@ -45,7 +45,7 @@ export function WriteToAir({ onClose }: { onClose: () => void }) {
         event.preventDefault();
         if (message.trim()) setSubmitted(true);
       }}>
-        <label>
+        <label className="write-to-air__message" data-message={message}>
           <span>Сообщение</span>
           <textarea rows={4} required value={message} placeholder={topic.placeholder} onChange={event => setMessages({ ...messages, [topic.title]: event.currentTarget.value })} />
         </label>

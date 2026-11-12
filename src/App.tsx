@@ -39,13 +39,13 @@ const contactCards = [
 const nav = [{ id: 'air', title: 'Эфир', icon: 'broadcast' }, { id: 'schedule', title: 'Расписание', icon: 'calendar' }, { id: 'contacts', title: 'Контакты', icon: 'mail' }, { id: 'about', title: 'О радиостанции', icon: 'more' }];
 type Details = { title: string; content: ReactNode } | null;
 
-function Header({ active, writeToAirOpen, onWriteToAir }: { active: string; writeToAirOpen: boolean; onWriteToAir: (event: MouseEvent<HTMLButtonElement>) => void }) {
+function Header({ writeToAirOpen, onWriteToAir }: { writeToAirOpen: boolean; onWriteToAir: (event: MouseEvent<HTMLButtonElement>) => void }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => { const update = () => setScrolled(window.scrollY > 12); update(); window.addEventListener('scroll', update, { passive: true }); return () => window.removeEventListener('scroll', update); }, []);
   return <header className={`header ${scrolled ? 'header--scrolled' : ''}`} data-figma-component="639:18784">
     <div className="container header__inner">
       <a className="brand" href="#air" aria-label="Риф FM — на главную"><img src={asset('logo-header.svg')} width="135" height="64" alt="Риф FM" /></a>
-      <nav aria-label="Основная навигация">{nav.map(item => <a key={item.id} href={`#${item.id}`} aria-current={active === item.id ? 'page' : undefined}>{item.title}</a>)}</nav>
+      <nav aria-label="Основная навигация">{nav.map(item => <a key={item.id} href={`#${item.id}`} aria-current={item.id === 'air' ? 'page' : undefined}>{item.title}</a>)}</nav>
       <div className="header__slot">
         <Button type="button" variant="secondary" size="m" icon="chat-bubble" aria-haspopup="dialog" aria-expanded={writeToAirOpen} onClick={onWriteToAir}>Написать в эфир</Button>
       </div>
@@ -74,16 +74,10 @@ function Socials({ footer = false, onMissing }: { footer?: boolean; onMissing: (
 }
 
 function Page() {
-  const [active, setActive] = useState('air');
   const [moreOpen, setMoreOpen] = useState(false);
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [writeToAirOpen, setWriteToAirOpen] = useState(false);
   const [details, setDetails] = useState<Details>(null);
-  useEffect(() => {
-    const observer = new IntersectionObserver(entries => { for(const entry of entries) if(entry.isIntersecting) setActive(entry.target.id); }, { rootMargin: '-15% 0px -60% 0px' });
-    nav.forEach(({id}) => { const section = document.getElementById(id); if(section) observer.observe(section); });
-    return () => observer.disconnect();
-  }, []);
   const pending = (title: string) => setDetails({ title, content: <p>Этот раздел не входит в прототип главной страницы.</p> });
   const missingSocial = (name: string) => setDetails({ title: `Риф FM в ${name}`, content: <p>Ссылка на официальный канал пока не подключена.</p> });
   const schedule = () => setDetails({ title: 'Дальше в эфире', content: <div className="schedule-list">{programs.map(p => <div key={p.cover}><img src={asset(`cover-${p.cover}.png`)} alt="" /><div><span>16:00 – 17:30</span><strong>{p.title}</strong></div></div>)}</div> });
@@ -91,8 +85,7 @@ function Page() {
     event.currentTarget.focus({ preventScroll: true });
     setWriteToAirOpen(true);
   };
-  const mobileTab = moreOpen || active === 'about' || active === 'contacts' ? 'more' : active === 'schedule' ? 'schedule' : 'air';
-  return <><a className="skip-link" href="#schedule">К содержимому</a><Header active={active} writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} /><main><Hero onOpenPlaylist={() => setPlaylistOpen(true)} playlistOpen={playlistOpen} />
+  return <><a className="skip-link" href="#schedule">К содержимому</a><Header writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} /><main><Hero onOpenPlaylist={() => setPlaylistOpen(true)} playlistOpen={playlistOpen} />
     <section className="section upcoming" id="schedule" data-figma-component="639:18786"><div className="container"><div className="section__header"><Heading first="Дальше в" script="эфире" /><Button variant="tertiary" iconRight="arrow" className="section__link" onClick={schedule}>Всё расписание</Button></div><div className="program-grid">{programs.map(program => <button className="program-card" key={program.cover} onClick={() => setDetails({ title: program.title, content: <><p className="detail-time">16:00 – 17:30</p>{program.cover === 'story' ? <><Hosts /><p>Как появилась песня, кто спел её первым и почему она до сих пор трогает.</p></> : <p>Слушайте программу в эфире Риф FM.</p>}<Button icon="play" onClick={() => { setDetails(null); document.getElementById('air')?.scrollIntoView({ behavior: 'smooth' }); }}>К эфиру</Button></> })}><img src={asset(`cover-${program.cover}.png`)} alt="" width="324" height="324" loading="lazy" /><span className="time-chip">16:00 – 17:30</span><h3>{program.title}</h3></button>)}</div><Button variant="secondary" iconRight="arrow" className="section__mobile-action" onClick={schedule}>Всё расписание</Button></div></section>
     <div className="ocean-gradient"><section className="section about" id="about" data-figma-component="639:18787"><div className="container about__grid"><div className="about__left"><Heading first="О радиостанции" script="Риф FM" /><img className="about__art" src={asset('about-art.png')} width="920" height="520" alt="Музыкальный маяк среди морских волн" loading="lazy" /></div><div className="about__copy">{about.map(p => <p key={p}>{p}</p>)}<Button iconRight="arrow" onClick={() => setDetails({ title: 'О радиостанции Риф FM', content: <>{about.map(p => <p key={p}>{p}</p>)}</> })}>Подробнее</Button></div><img className="about__birds" src={asset('seagulls.png')} alt="" loading="lazy" /></div></section>
     <section className="section contacts" id="contacts" data-figma-component="639:18788">
@@ -130,7 +123,7 @@ function Page() {
     <footer className="footer"><div className="container footer__inner"><a href="#air" className="footer__logo" aria-label="Риф FM — к эфиру"><img src={asset('logo-footer.svg')} alt="Риф FM — на волне моего сердца, 95,2 FM" width="280" height="280" loading="lazy" /></a><div className="footer__right"><div className="footer__columns"><div><h3>Радио</h3><a href="#air">Слушать эфир</a><a href="#schedule">Расписание</a></div><div><h3>О нас</h3><a href="#about">О радиостанции</a><a href="#contacts">Контакты</a><button onClick={() => pending('Рекламодателям')}>Рекламодателям</button><button onClick={() => pending('Партнёрам')}>Партнёрам</button></div><div><h3>Документы</h3>{['Политика конфиденциальности','Пользовательские документы','Обработка персональных данных','Cookie'].map(label => <button key={label} onClick={() => pending(label)}>{label}</button>)}</div></div><div className="footer__bottom"><p>© 2026 Радиостанция Риф FM · 95,2 FM</p><Socials footer onMissing={missingSocial} /></div></div></div></footer>
     </div><div className="seabed"><img src={asset('seabed.png')} width="1920" height="194" alt="" loading="lazy" /></div>
   </main><DesktopPlayer onOpenPlaylist={() => setPlaylistOpen(true)} playlistOpen={playlistOpen} />
-  <MobileBar active={mobileTab} moreOpen={moreOpen} onMore={() => setMoreOpen(true)} writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} onOpenPlaylist={() => setPlaylistOpen(true)} playlistOpen={playlistOpen} />
+  <MobileBar moreOpen={moreOpen} onMore={() => setMoreOpen(true)} writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} onOpenPlaylist={() => setPlaylistOpen(true)} playlistOpen={playlistOpen} />
   {moreOpen && <Dialog label="Ещё" onClose={() => setMoreOpen(false)} className="more-sheet"><div className="sheet-handle" /><div className="details__header"><h2>Ещё</h2><Button variant="tertiary" icon="chevron-down" iconOnly aria-label="Закрыть меню" onClick={() => setMoreOpen(false)} /></div><a href="#about" onClick={() => setMoreOpen(false)}>О радиостанции</a><a href="#contacts" onClick={() => setMoreOpen(false)}>Контакты</a>{['Рекламодателям','Партнёрам','Документы'].map(label => <button key={label} onClick={() => { setMoreOpen(false); pending(label); }}>{label}<Icon name="arrow" /></button>)}</Dialog>}
   {details && <Dialog label={details.title} onClose={() => setDetails(null)} className="details"><div className="details__header"><h2>{details.title}</h2><Button variant="secondary" icon="chevron-down" iconOnly aria-label="Закрыть" onClick={() => setDetails(null)} /></div><div className="details__body">{details.content}</div></Dialog>}
   {writeToAirOpen && <WriteToAir onClose={() => setWriteToAirOpen(false)} />}
