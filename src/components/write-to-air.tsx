@@ -20,6 +20,7 @@ export function WriteToAir({ onClose }: { onClose: () => void }) {
   const title = submitted ? 'Спасибо за сообщение!' : topic?.title ?? 'Написать в эфир';
   const heading = useRef<HTMLHeadingElement>(null);
   const message = topic ? messages[topic.title] ?? '' : '';
+  const canSubmit = message.trim() !== '' && name.trim() !== '';
 
   useEffect(() => {
     heading.current?.closest('dialog')?.scrollTo(0, 0);
@@ -43,17 +44,17 @@ export function WriteToAir({ onClose }: { onClose: () => void }) {
         <Button type="button" onClick={close}>Хорошо</Button>
       </div> : topic ? <form className="write-to-air__form" onSubmit={event => {
         event.preventDefault();
-        if (message.trim()) setSubmitted(true);
+        if (canSubmit) setSubmitted(true);
       }}>
         <label className="write-to-air__message" data-message={message}>
           <span>Сообщение</span>
           <textarea rows={4} required value={message} placeholder={topic.placeholder} onChange={event => setMessages({ ...messages, [topic.title]: event.currentTarget.value })} />
         </label>
         <label>
-          <span>Имя <span className="write-to-air__optional">(необязательно)</span></span>
-          <input type="text" autoComplete="given-name" value={name} placeholder="Как к вам обращаться" onChange={event => setName(event.currentTarget.value)} />
+          <span>Имя</span>
+          <input type="text" required autoComplete="given-name" value={name} placeholder="Как к вам обращаться" onChange={event => setName(event.currentTarget.value)} />
         </label>
-        <Button type="submit" disabled={!message.trim()}>Отправить</Button>
+        <Button type="submit" disabled={!canSubmit}>Отправить</Button>
       </form> : <ul className="write-to-air__topics" aria-label="Выберите тему">
         {topics.map(item => <li key={item.title}>
           <Button type="button" variant="tertiary" iconRight="chevron-down" onClick={() => setTopic(item)}>{item.title}</Button>

@@ -125,8 +125,6 @@
 .write-to-air__form label + label { margin-block-start: var(--spacing-16); }
 :is(.write-to-air__form, .write-to-air__confirmation) > .button { margin-block-start: var(--write-to-air-section-gap); }
 
-.write-to-air__optional { color: var(--text-secondary); }
-
 .write-to-air__form :is(textarea, input),
 .write-to-air__message::after {
   width: 100%;
@@ -161,7 +159,7 @@
 }
 
 .write-to-air__form :is(textarea, input)::placeholder { color: var(--text-secondary); }
-:root[data-prototype-version='1'] .write-to-air__form :is(textarea, input)::placeholder { color: #87949f; opacity: 1; }
+:root:is([data-prototype-version='1'], [data-prototype-version='3']) .write-to-air__form :is(textarea, input)::placeholder { color: #87949f; opacity: 1; }
 .write-to-air__form :is(textarea, input):focus-visible {
   outline: 2px solid var(--stroke-focus);
   outline-offset: 1px;

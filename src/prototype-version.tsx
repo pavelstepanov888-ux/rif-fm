@@ -4,7 +4,8 @@ export function PrototypeVersionProvider({ children }: { children: ReactNode }) 
   useLayoutEffect(() => {
     const root = document.documentElement;
     const previous = root.dataset.prototypeVersion;
-    root.dataset.prototypeVersion = new URLSearchParams(window.location.search).get('version') === '2' ? '2' : '1';
+    const version = new URLSearchParams(window.location.search).get('version');
+    root.dataset.prototypeVersion = version === '2' || version === '3' ? version : '1';
     return () => {
       if (previous === undefined) delete root.dataset.prototypeVersion;
       else root.dataset.prototypeVersion = previous;

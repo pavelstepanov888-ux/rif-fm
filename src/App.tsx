@@ -47,7 +47,7 @@ function Header({ writeToAirOpen, onWriteToAir }: { writeToAirOpen: boolean; onW
       <a className="brand" href="#air" aria-label="Риф FM — на главную"><img src={asset('logo-header.svg')} width="135" height="64" alt="Риф FM" /></a>
       <nav aria-label="Основная навигация">{nav.map(item => <a key={item.id} href={`#${item.id}`} aria-current={item.id === 'air' ? 'page' : undefined}>{item.title}</a>)}</nav>
       <div className="header__slot">
-        <Button type="button" variant="secondary" size="m" icon="chat-bubble" aria-haspopup="dialog" aria-expanded={writeToAirOpen} onClick={onWriteToAir}>Написать в эфир</Button>
+        <Button className="header__write-to-air" type="button" variant="secondary" size="m" icon="chat-bubble" aria-haspopup="dialog" aria-expanded={writeToAirOpen} onClick={onWriteToAir}>Написать в эфир</Button>
       </div>
     </div>
   </header>;

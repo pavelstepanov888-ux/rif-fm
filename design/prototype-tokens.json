@@ -13,6 +13,10 @@
       "--icon-accent-secondary": "#1980d4",
       "--controls-secondary-background": "#e3f5fc",
       "--controls-secondary-hover": "#d2eaf6"
+    },
+    "3": {
+      "--text-secondary": "#068fd3",
+      "--icons-secondary": "#068fd3"
     }
   }
 }
