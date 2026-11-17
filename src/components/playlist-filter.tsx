@@ -4,13 +4,12 @@ import { Button } from './ui';
 type PlaylistFilterProps = {
   id: string;
   label: string;
-  showLabel?: boolean;
   value: string;
   options: readonly { id: string; label: string }[];
   onChange: (value: string) => void;
 };
 
-export function PlaylistFilter({ id, label, showLabel = false, value, options, onChange }: PlaylistFilterProps) {
+export function PlaylistFilter({ id, label, value, options, onChange }: PlaylistFilterProps) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const menu = useRef<HTMLDivElement>(null);
@@ -55,7 +54,6 @@ export function PlaylistFilter({ id, label, showLabel = false, value, options, o
     event.stopPropagation();
     closeAndFocusTrigger();
   }}>
-    {showLabel && <label htmlFor={id}>{label}</label>}
     <Button id={id} type="button" variant="secondary" size="m" iconRight="chevron-down" className="playlist-filter__trigger"
       aria-label={`${label}, ${selected.label}`} aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? menuId : undefined}
       onClick={() => open ? closeAndFocusTrigger() : setOpen(true)} onKeyDown={event => {

@@ -1,4 +1,4 @@
-import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Avatar, Button, Dialog, Heading, Icon } from '../components/ui';
 import { PlaylistFilter } from '../components/playlist-filter';
 import { asset } from '../assets';
@@ -6,10 +6,6 @@ import { articleCover, byId, directions, episodePrograms, items, pick, programs,
 import { articleReferences, articles, searchMusic, type ArticleBlock, type ArticleLink } from './articles';
 import { musicHref as href, type MusicRoute } from './navigation';
 import { type Clip, type RecordingState } from './recordings';
-
-const articleCoverStyle = {
-  '--article-cover-background': `url("${asset('cover-article-background.webp')}")`,
-} as CSSProperties;
 
 const typeNames: Record<string, string> = Object.fromEntries(sections.map(({ id, label }) => [id, label]));
 const editorialIds = ['studio-story', 'sade-story', 'words-story'];
@@ -52,7 +48,7 @@ function MusicCover({ item, loading }: { item: Item; loading?: 'lazy' }) {
 function MediaCard({ item, direction = '', meta = cardMeta(item) }: { item: Item; direction?: string; meta?: string }) {
   return <a className={'music-card music-card--' + item.type} href={href('detail', item.id, direction)}>
     <div className="music-card__art">
-      <MusicCover item={item} loading="lazy"/>
+      {item.type !== 'article' && <MusicCover item={item} loading="lazy"/>}
       {item.type === 'program' && <span aria-hidden="true" className="program-title">{item.title}</span>}
       {item.type === 'episode' && <span className="media-chip"><Icon name={item.format === 'video' ? 'video' : 'play'}/>{item.format === 'video' ? 'Видео' : 'Аудио'}</span>}
     </div>
@@ -133,8 +129,7 @@ function RelatedSections({ item, direction }: { item: Item; direction: string })
 
 function Directions({ active }: { active?: string }) {
   return <nav className="directions" aria-label="Музыкальные направления">
-    {directions.map((direction) => <a key={direction.id} className={'direction-tile tone-' + direction.id} aria-current={active === direction.id ? 'page' : undefined} href={href('direction', direction.id)}>
-      <img src={asset(direction.cover)} alt=""/>
+    {directions.map((direction) => <a key={direction.id} className="direction-tile" aria-current={active === direction.id ? 'page' : undefined} href={href('direction', direction.id)}>
       <span className="direction-label"><strong>{direction.title}</strong><small>{direction.short}</small></span>
     </a>)}
   </nav>;
@@ -192,7 +187,8 @@ function ClipButton({ clip, current, playing, play }: { clip: Clip; current: Cli
 
 function ArticleObjectCard({ image, portrait, typeLabel, title, subtitle, action }: Pick<ArticleLink, 'image' | 'portrait' | 'title' | 'subtitle'> & { typeLabel?: string; action: ReactNode }) {
   return <div className="object-card">
-    <img className={`object-cover${portrait ? ' object-cover--portrait' : ''}${image === articleCover ? ' object-cover--article' : ''}`} src={asset(image)} alt="" loading="lazy"/>
+    {image === articleCover ? <div className="object-cover object-cover--article" aria-hidden="true"/> :
+      <img className={`object-cover${portrait ? ' object-cover--portrait' : ''}`} src={asset(image)} alt="" loading="lazy"/>}
     <span className="object-copy">
       {typeLabel && <span className="eyebrow">{typeLabel}</span>}
       <strong>{title}</strong>
@@ -238,9 +234,7 @@ function ArticleView({ item, direction, breadcrumbs }: {
         <h1>{item.title}</h1>
         <p>{item.subtitle}</p>
       </header>
-      <figure className="article-cover">
-        <img src={asset(item.image)} alt=""/>
-      </figure>
+      <div className="article-cover" aria-hidden="true"/>
     </div>
     {article.chapters.length > 0 && <nav className="article-toc" aria-label="Оглавление">
       <strong>Оглавление</strong>
@@ -273,12 +267,11 @@ function CoverFeature({ list, direction }: { list: Item[]; direction: string }) 
     </div>
     <div className="feature-grid">
       <a className="feature-main" href={href('detail', story.id, direction)}>
-        <img src={asset(story.image)} alt=""/>
         <div className="feature-copy"><span>{leadMeta}</span><h3>{story.title}</h3><p>{story.description}</p><span className="feature-link">Читать</span></div>
       </a>
       {otherStories.length > 0 && <div className="feature-side">
         {otherStories.map((item) => <a key={item.id} href={href('detail', item.id, direction)}>
-          <img src={asset(item.image)} alt=""/>
+          <div className="feature-side__cover" aria-hidden="true"/>
           <span><small>{item.direction} · {articles[item.id]?.time}</small><strong>{item.title}</strong><span className="feature-summary">{item.description}</span></span>
         </a>)}
       </div>}
@@ -319,7 +312,7 @@ export function Music({ route, recordings }: {
   const scriptStart = overviewTitle.lastIndexOf(' ') + 1;
 
   return (
-    <main className={`container music-main music-main--${route.page}`} id="music-content" tabIndex={-1} style={articleCoverStyle}>
+    <main className={`container music-main music-main--${route.page}`} id="music-content" tabIndex={-1}>
       {!articlePage && breadcrumbs}
 
       {showOverview && <>
@@ -338,8 +331,8 @@ export function Music({ route, recordings }: {
       {route.page === 'catalog' && section && <>
         <header className="music-title"><Heading first={section.title} script={section.script} level={1} size={2}/></header>
         {section.id === 'episode' && <div className="playlist-filters catalog-filters" role="group" aria-label="Фильтры записей эфиров">
-          <PlaylistFilter id="recordings-format" label="Формат" showLabel value={format} options={formatOptions} onChange={setFormat}/>
-          <PlaylistFilter id="recordings-guest" label="Гость" showLabel value={guest}
+          <PlaylistFilter id="recordings-format" label="Формат" value={format} options={formatOptions} onChange={setFormat}/>
+          <PlaylistFilter id="recordings-guest" label="Гость" value={guest}
             options={[{ id: '', label: 'Все гости' }, ...guests.map(name => ({ id: name, label: name }))]} onChange={setGuest}/>
         </div>}
         {catalog.length ? <div className="catalog-grid" data-desktop-columns={section.desktopColumns}>

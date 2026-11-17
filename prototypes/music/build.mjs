@@ -11,7 +11,7 @@ async function embed(file) {
   return 'data:' + types[path.extname(file)] + ';base64,' + (await readFile(file)).toString('base64');
 }
 const assetDir = path.join(frontend, 'public/assets');
-const projectAssets = (await readdir(assetDir)).filter((name) => /^(icon-|album-|cover-|logo-|seabed|underline|guest|host|video-poster|write-to-air-confirmation|direction-|radio-fragment|studio\.jpg$|portrait-|poster-|book-)/.test(name));
+const projectAssets = (await readdir(assetDir)).filter((name) => /^(icon-|album-|cover-|logo-|seabed|underline|guest|host|video-poster|write-to-air-confirmation|radio-fragment|studio\.jpg$|portrait-|poster-|book-)/.test(name));
 const files = projectAssets.map((name) => path.join(assetDir, name));
 const assets = Object.fromEntries(await Promise.all(files.map(async (file) => [path.basename(file), await embed(file)])));
 const result = await build({
