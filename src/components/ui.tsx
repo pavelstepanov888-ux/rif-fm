@@ -27,7 +27,7 @@ export function Avatar({ src, name }: { src?: string; name: string }) {
 }
 
 export function Hosts() {
-  return <div className="hosts"><div className="hosts__avatars"><Avatar src={asset('host.png')} name="Игорь Федоров" /><Avatar src={asset('guest.png')} name="Михаил Александров" /></div>
+  return <div className="hosts"><div className="hosts__avatars"><Avatar src={asset('host.png')} name="Игорь Федоров" /><Avatar src={asset('guest-mikhail-portrait.jpg')} name="Михаил Александров" /></div>
     <div className="hosts__names"><strong>Игорь Федоров</strong><span>В гостях: Михаил Александров</span></div>
   </div>;
 }
@@ -36,9 +36,14 @@ export function LiveLabel() {
   return <div className="live-label"><span className="live-label__dot" aria-hidden="true" /><span className="live-label__text">Сейчас в эфире</span></div>;
 }
 
-export function Heading({ first, script, level = 2 }: { first: string; script: string; level?: 1 | 2 }) {
+export function Heading({ first, script, level = 2, size = level }: { first: string; script: string; level?: 1 | 2; size?: 1 | 2 }) {
   const Tag = level === 1 ? 'h1' : 'h2';
-  return <Tag className={`heading heading--${level}`}><span>{first}</span><span className="heading__script">{script}<img src={asset('underline.svg')} alt="" /></span></Tag>;
+  const title = `${first} ${script}`.trim();
+  const singleWord = /^\S+$/.test(title);
+  return <Tag className={`heading heading--${size}`}>
+    <span>{singleWord ? title : first}</span>
+    {!singleWord && <span className="heading__script">{script}<img src={asset('underline.svg')} alt="" /></span>}
+  </Tag>;
 }
 
 export function Volume({ value, onChange }: { value: number; onChange: (value: number) => void }) {

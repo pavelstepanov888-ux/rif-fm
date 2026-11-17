@@ -4,7 +4,7 @@ import { liveTrack } from '../playlist-data';
 import { Button, Dialog, Heading, Hosts, Icon, LiveLabel, Volume, Wave } from './ui';
 
 type Playback = 'paused' | 'loading' | 'playing';
-type Radio = { status: Playback; toggle: () => void; volume: number; setVolume: (value: number) => void; videoOpen: boolean; openVideo: () => void; closeVideo: () => void; notice: string };
+type Radio = { status: Playback; toggle: () => void; pause: () => void; volume: number; setVolume: (value: number) => void; videoOpen: boolean; openVideo: () => void; closeVideo: () => void; notice: string };
 const RadioContext = createContext<Radio | null>(null);
 export const useRadio = () => useContext(RadioContext)!;
 
@@ -27,14 +27,18 @@ export function RadioProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if(audio.current) audio.current.volume = volume; }, [volume]);
   useEffect(() => () => { if(demoTimer.current) clearTimeout(demoTimer.current); }, []);
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 4500); return () => clearTimeout(timer); }, [notice]);
-  const toggle = () => {
+  const pause = () => {
     if(demoTimer.current) clearTimeout(demoTimer.current);
-    if(status !== 'paused') { audio.current?.pause(); setStatus('paused'); return; }
+    audio.current?.pause();
+    setStatus('paused');
+  };
+  const toggle = () => {
+    if(status !== 'paused') { pause(); return; }
     setStatus('loading');
     if(audio.current) { void audio.current.play().catch(() => { setStatus('paused'); setNotice('Не удалось подключиться к эфиру. Попробуйте ещё раз.'); }); }
     else { setNotice('Прототип: аудиопоток пока не подключён'); demoTimer.current = setTimeout(() => setStatus('playing'), 650); }
   };
-  return <RadioContext.Provider value={{ status, toggle, volume, setVolume, videoOpen, openVideo: () => setVideoOpen(true), closeVideo: () => setVideoOpen(false), notice }}>{children}{notice && <div className="notice" role="status">{notice}</div>}</RadioContext.Provider>;
+  return <RadioContext.Provider value={{ status, toggle, pause, volume, setVolume, videoOpen, openVideo: () => setVideoOpen(true), closeVideo: () => setVideoOpen(false), notice }}>{children}{notice && <div className="notice" role="status">{notice}</div>}</RadioContext.Provider>;
 }
 
 export function PlayControl({ listen = false, minimal = false }: { listen?: boolean; minimal?: boolean }) {
