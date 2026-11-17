@@ -223,13 +223,8 @@
 :where(.music-main) .track-cover img { width: 100%; aspect-ratio: 1; object-fit: cover; }
 :where(.music-main) .track small { display: block; }
 
-.catalog-filters { display: flex; flex-wrap: wrap; gap: var(--spacing-16); margin-bottom: var(--spacing-32); }
-.catalog-filters label { display: grid; gap: var(--spacing-6); font-size: var(--typography-p3-medium-size); }
-.catalog-filters select {
-  font: inherit; color: var(--text-primary); background: var(--background-primary);
-  border: 1px solid var(--stroke-primary); border-radius: var(--field-radius);
-  min-height: 48px; padding: 0 var(--spacing-16);
-}
+.catalog-filters { margin-bottom: var(--spacing-32); }
+.catalog-filters label { display: block; margin-bottom: var(--spacing-6); font-size: var(--typography-p3-medium-size); }
 .catalog-grid { gap: var(--spacing-32) var(--spacing-20); margin-bottom: var(--spacing-64); }
 :where(.music-main) .empty { display: grid; gap: var(--spacing-16); justify-items: center; padding: var(--spacing-64) 0; text-align: center; }
 

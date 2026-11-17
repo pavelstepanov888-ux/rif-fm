@@ -29,7 +29,7 @@ const result = await build({
     },
   }],
 });
-let styles = (await Promise.all(['tokens.css', 'styles.css', 'prototype.css', 'write-to-air.css'].map((name) => readFile(path.join(frontend,'src',name), 'utf8')))).join('\n');
+let styles = (await Promise.all(['tokens.css', 'styles.css', 'playlist.css', 'prototype.css', 'write-to-air.css'].map((name) => readFile(path.join(frontend,'src',name), 'utf8')))).join('\n');
 for (const match of [...styles.matchAll(/url\(['"]?(\/fonts\/[^)'"]+)['"]?\)/g)]) {
   styles = styles.replaceAll(match[0], 'url("' + await embed(path.join(frontend, 'public', match[1])) + '")');
 }

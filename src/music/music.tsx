@@ -1,5 +1,6 @@
 import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { Avatar, Button, Dialog, Heading, Icon } from '../components/ui';
+import { PlaylistFilter } from '../components/playlist-filter';
 import { asset } from '../assets';
 import { articleCover, byId, directions, episodePrograms, items, pick, programs, sections, tracks, type Item } from './data';
 import { articleReferences, articles, searchMusic, type ArticleBlock, type ArticleLink } from './articles';
@@ -23,6 +24,11 @@ const catalogLabels: Record<string, string> = {
   release: 'Все релизы', program: 'Все программы', episode: 'Все записи',
   artist: 'Все артисты', article: 'Все статьи',
 };
+const formatOptions = [
+  { id: '', label: 'Аудио и видео' },
+  { id: 'audio', label: 'Аудио' },
+  { id: 'video', label: 'Видео' },
+];
 
 const broadcastDate = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Moscow' });
 const formatBroadcastDate = (date: string) => broadcastDate.format(new Date(date)).replace(/\s+г\.(?=\s|$)/u, '');
@@ -331,9 +337,10 @@ export function Music({ route, recordings }: {
 
       {route.page === 'catalog' && section && <>
         <header className="music-title"><Heading first={section.title} script={section.script} level={1} size={2}/></header>
-        {section.id === 'episode' && <div className="catalog-filters">
-          <label>Формат<select value={format} onChange={(event) => setFormat(event.target.value)}><option value="">Аудио и видео</option><option value="audio">Аудио</option><option value="video">Видео</option></select></label>
-          <label>Гость<select value={guest} onChange={(event) => setGuest(event.target.value)}><option value="">Все гости</option>{guests.map((name) => <option key={name}>{name}</option>)}</select></label>
+        {section.id === 'episode' && <div className="playlist-filters catalog-filters" role="group" aria-label="Фильтры записей эфиров">
+          <PlaylistFilter id="recordings-format" label="Формат" showLabel value={format} options={formatOptions} onChange={setFormat}/>
+          <PlaylistFilter id="recordings-guest" label="Гость" showLabel value={guest}
+            options={[{ id: '', label: 'Все гости' }, ...guests.map(name => ({ id: name, label: name }))]} onChange={setGuest}/>
         </div>}
         {catalog.length ? <div className="catalog-grid" data-desktop-columns={section.desktopColumns}>
           {catalog.map((entry) => <MediaCard key={entry.id} item={entry} direction={directionId}/>)}
