@@ -130,6 +130,7 @@ function RelatedSections({ item, direction }: { item: Item; direction: string })
 function Directions({ active }: { active?: string }) {
   return <nav className="directions" aria-label="Музыкальные направления">
     {directions.map((direction) => <a key={direction.id} className="direction-tile" aria-current={active === direction.id ? 'page' : undefined} href={href('direction', direction.id)}>
+      <Icon name="heart-spark" className="direction-tile__icon"/>
       <span className="direction-label"><strong>{direction.title}</strong><small>{direction.short}</small></span>
     </a>)}
   </nav>;

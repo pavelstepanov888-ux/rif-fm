@@ -58,31 +58,33 @@
   margin-bottom: var(--spacing-48);
 }
 .direction-tile {
-  --direction-padding: var(--spacing-16);
-  --direction-start: #e4f6fd;
-  --direction-background: linear-gradient(156.525deg, var(--direction-start), #bdeafb 48%, #8bd2f2);
+  --direction-background: var(--controls-secondary-background, #e3f5fc);
+  --direction-icon-size: var(--spacing-40);
   min-width: 0;
-  min-height: 92px;
-  aspect-ratio: 3;
+  min-height: 80px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  padding: var(--direction-padding);
-  border: 1px solid color-mix(in srgb, var(--rif-075192) 15%, var(--direction-start));
-  border-radius: var(--spacing-24);
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-20);
+  border: 2px solid transparent;
+  border-radius: 999px;
   background: var(--direction-background);
   color: var(--text-primary);
 }
 .direction-tile[aria-current="page"] {
-  padding: calc(var(--direction-padding) - 1px);
-  border: 2px solid transparent;
-  background: var(--direction-background) padding-box,
+  background: linear-gradient(var(--direction-background), var(--direction-background)) padding-box,
     linear-gradient(90deg, var(--rif-dd3338), #e8850c) border-box;
 }
 @media (hover: hover) {
-  .direction-tile:not([aria-current]):hover { border-color: var(--rif-075192); }
+  .direction-tile:hover { --direction-background: var(--controls-secondary-hover, #d2eaf6); }
 }
-.direction-label { display: grid; gap: var(--spacing-4); min-width: 0; padding-inline-start: var(--spacing-8); overflow-wrap: anywhere; }
+.direction-tile .direction-tile__icon {
+  width: var(--direction-icon-size);
+  height: var(--direction-icon-size);
+  background: var(--write-to-air-blue-gradient);
+}
+.direction-label { display: grid; gap: var(--spacing-4); min-width: 0; overflow-wrap: anywhere; }
 .direction-label strong { font-size: var(--typography-p2-bold-size); line-height: var(--typography-p2-bold-line-height); font-weight: 700; }
 .direction-label small { color: color-mix(in srgb, var(--text-primary) 58%, var(--rif-075192)); font-size: var(--typography-p3-medium-size); line-height: var(--typography-p3-medium-line-height); font-weight: 500; }
 .music-section { margin: 0 0 var(--spacing-64); }
@@ -314,7 +316,7 @@
 }
 
 @media (max-width: 1100px) {
-  .direction-tile { --direction-padding: var(--spacing-12); aspect-ratio: auto; }
+  .direction-tile { --direction-icon-size: var(--spacing-32); gap: var(--spacing-8); padding-inline: var(--spacing-12); }
   .direction-label strong { font-size: var(--typography-p3-bold-size); line-height: var(--typography-p3-bold-line-height); }
 }
 
@@ -325,8 +327,7 @@
   .music-title .heading { gap: var(--spacing-8); }
   .music-title p { margin-top: var(--spacing-12); }
   .directions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-8); margin-bottom: var(--spacing-32); }
-  .direction-tile { min-height: 84px; border-radius: var(--spacing-20); }
-  .direction-label { padding-inline-start: var(--spacing-4); }
+  .direction-tile { --direction-icon-size: var(--spacing-24); border-radius: var(--spacing-32); }
   .music-section { margin-bottom: var(--spacing-40); }
   .episode-list, .episode-list__link { gap: var(--spacing-12); }
   .episode-list__cover { width: var(--spacing-48); }

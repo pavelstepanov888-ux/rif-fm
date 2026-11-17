@@ -26,8 +26,12 @@
 }
 
 /* Figma 1196:323532, converted from the gradient transform on the 200 × 48 px button. */
+:root {
+  --write-to-air-blue-gradient: linear-gradient(156.525deg, #a3edff 5.932%, #3ec8f4 15.254%, #00a0e3 27.119% 72.881%, #3ebceb 90.678%);
+}
+
 :root:is([data-prototype-version='2'], [data-prototype-version='3']) .header__write-to-air {
-  --write-to-air-background: linear-gradient(156.525deg, #a3edff 5.932%, #3ec8f4 15.254%, #00a0e3 27.119% 72.881%, #3ebceb 90.678%);
+  --write-to-air-background: var(--write-to-air-blue-gradient);
   --write-to-air-shadow: rgb(0 160 227 / 18%);
 }
 
