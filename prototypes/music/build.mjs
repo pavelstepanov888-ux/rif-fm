@@ -34,7 +34,7 @@ for (const match of [...styles.matchAll(/url\(['"]?(\/fonts\/[^)'"]+)['"]?\)/g)]
   styles = styles.replaceAll(match[0], 'url("' + await embed(path.join(frontend, 'public', match[1])) + '")');
 }
 styles += '\n' + await readFile(path.join(frontend, 'src/music/style.css'), 'utf8');
-const html = '<!doctype html><html lang="ru" data-prototype-version="3"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Музыка · Риф FM</title><style>' + styles + '</style></head><body><div id="root"></div><script>' + result.outputFiles[0].text.replaceAll('</script','<\\/script') + '</script></body></html>';
+const html = '<!doctype html><html lang="ru" data-prototype-version="3"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Музыкальный мир РИФ FM</title><style>' + styles + '</style></head><body><div id="root"></div><script>' + result.outputFiles[0].text.replaceAll('</script','<\\/script') + '</script></body></html>';
 const output = path.join(root, 'music-draft.html');
 await writeFile(output, html);
 console.log(output);

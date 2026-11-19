@@ -2,9 +2,9 @@ import { Fragment, useState, type ReactNode } from 'react';
 import { Avatar, Button, Dialog, Heading, Icon } from '../components/ui';
 import { PlaylistFilter } from '../components/playlist-filter';
 import { asset } from '../assets';
-import { articleCover, byId, directions, episodePrograms, items, pick, programs, sections, tracks, type Item } from './data';
+import { articleCover, byId, directions, episodePrograms, featuredIds, items, pick, programs, sections, tracks, type Item } from './data';
 import { articleReferences, articles, searchMusic, type ArticleBlock, type ArticleLink } from './articles';
-import { musicHref as href, type MusicRoute } from './navigation';
+import { catalogLabels, hasCatalog, musicHref as href, type MusicRoute } from './navigation';
 import { type Clip, type RecordingState } from './recordings';
 
 const typeNames: Record<string, string> = Object.fromEntries(sections.map(({ id, label }) => [id, label]));
@@ -16,10 +16,6 @@ const relatedGroups = [
   { type: 'artist', title: 'Артисты и гости' },
   { type: 'release', title: 'Релизы' },
 ];
-const catalogLabels: Record<string, string> = {
-  release: 'Все релизы', program: 'Все программы', episode: 'Все записи',
-  artist: 'Все артисты', article: 'Все статьи',
-};
 const formatOptions = [
   { id: '', label: 'Аудио и видео' },
   { id: 'audio', label: 'Аудио' },
@@ -45,7 +41,7 @@ function MusicCover({ item, loading }: { item: Item; loading?: 'lazy' }) {
   return <img src={asset(item.image)} alt="" loading={loading} style={style}/>;
 }
 
-function MediaCard({ item, direction = '', meta = cardMeta(item) }: { item: Item; direction?: string; meta?: string }) {
+function MediaCard({ item, direction = '', showMeta = true }: { item: Item; direction?: string; showMeta?: boolean }) {
   return <a className={'music-card music-card--' + item.type} href={href('detail', item.id, direction)}>
     <div className="music-card__art">
       {item.type !== 'article' && <MusicCover item={item} loading="lazy"/>}
@@ -53,40 +49,44 @@ function MediaCard({ item, direction = '', meta = cardMeta(item) }: { item: Item
       {item.type === 'episode' && <span className="media-chip"><Icon name={item.format === 'video' ? 'video' : 'play'}/>{item.format === 'video' ? 'Видео' : 'Аудио'}</span>}
     </div>
     <div className="card-copy">
-      {(item.type === 'article' || item.type === 'release') && <span className="eyebrow">{meta}</span>}
+      {showMeta && (item.type === 'article' || item.type === 'release') && <span className="eyebrow">{cardMeta(item)}</span>}
       <h3>{item.title}</h3>
       <p>{item.type === 'article' ? item.description : item.subtitle}</p>
     </div>
   </a>;
 }
 
-function ShelfHeading({ title, script, more, moreLabel }: {
-  title: string; script?: string; more?: string; moreLabel?: string;
+type CatalogLink = { href: string; label: string };
+
+function ShelfSection({ title, script, more, className = '', children }: {
+  title: string; script?: string; more?: CatalogLink; className?: string; children: ReactNode;
 }) {
-  const content = script ? <Heading first={title} script={script}/> : <h2>{title}</h2>;
   const heading = [title, script].filter(Boolean).join(' ');
-  const linkLabel = [heading, moreLabel].filter(Boolean).join('. ');
-  return <div className="shelf-heading">
-    {more ? <a className="shelf-heading__link" href={more} aria-label={linkLabel}>
-      {content}
-      <Icon name="chevron-down" className="shelf-heading__chevron"/>
-    </a> : content}
-  </div>;
+  return <section className={`music-section ${className}`} aria-label={heading}>
+    <div className="shelf-heading section__header">
+      {script ? <Heading first={title} script={script}/> : <h2>{title}</h2>}
+      {more && <a className="button button--tertiary button--m section__link" href={more.href}>
+        {more.label}<Icon name="arrow"/>
+      </a>}
+    </div>
+    {children}
+    {more && <a className="button button--secondary button--m section__mobile-action" href={more.href}>
+      {more.label}<Icon name="arrow"/>
+    </a>}
+  </section>;
 }
 
-function Shelf({ title, script, list, more, moreLabel, direction = '', desktopColumns }: {
-  title: string; script?: string; list: Item[]; more?: string; moreLabel?: string;
+function Shelf({ title, script, list, more, direction = '', desktopColumns }: {
+  title: string; script?: string; list: Item[]; more?: CatalogLink;
   direction?: string; desktopColumns?: 5 | 6;
 }) {
   if (!list.length) return null;
   const preview = more ? list.slice(0, desktopColumns ?? 4) : list;
-  const heading = [title, script].filter(Boolean).join(' ');
-  return <section className="music-section" aria-label={heading}>
-    <ShelfHeading title={title} script={script} more={more} moreLabel={moreLabel}/>
+  return <ShelfSection title={title} script={script} more={more}>
     <div className="music-shelf" data-single={preview.length === 1 || undefined} data-desktop-columns={desktopColumns}>
       {preview.map((item) => <MediaCard key={item.id} item={item} direction={direction}/>)}
     </div>
-  </section>;
+  </ShelfSection>;
 }
 
 function EpisodeList({ title, episodes, cover, direction }: { title: string; episodes: Item[]; cover: string; direction: string }) {
@@ -130,7 +130,7 @@ function RelatedSections({ item, direction }: { item: Item; direction: string })
 function Directions({ active }: { active?: string }) {
   return <nav className="directions" aria-label="Музыкальные направления">
     {directions.map((direction) => <a key={direction.id} className="direction-tile" aria-current={active === direction.id ? 'page' : undefined} href={href('direction', direction.id)}>
-      <Icon name="heart-spark" className="direction-tile__icon"/>
+      <img className="direction-tile__icon" src={asset(`icon-direction-${direction.id}.svg`)} alt=""/>
       <span className="direction-label"><strong>{direction.title}</strong><small>{direction.short}</small></span>
     </a>)}
   </nav>;
@@ -257,27 +257,23 @@ function ArticleView({ item, direction, breadcrumbs }: {
 function CoverFeature({ list, direction }: { list: Item[]; direction: string }) {
   const [story, ...otherStories] = list;
   if (!story) return null;
-  const leadMeta = [cardMeta(story), articles[story.id]?.time].filter(Boolean).join(' · ');
-  return <section className="music-section editor-section" aria-label="Выбор редакции">
-    <ShelfHeading title="Выбор" script="редакции" more={href('catalog', 'article', direction)} moreLabel="Все статьи"/>
+  return <ShelfSection title="Выбор" script="редакции" className="editor-section"
+    more={{ href: href('catalog', 'article', direction), label: catalogLabels.article }}>
     <div className="music-shelf editorial-shelf">
-      {list.map((item) => {
-        const meta = item === story ? leadMeta : [item.direction, articles[item.id]?.time].filter(Boolean).join(' · ');
-        return <MediaCard key={item.id} item={item} direction={direction} meta={meta}/>;
-      })}
+      {list.map((item) => <MediaCard key={item.id} item={item} direction={direction} showMeta={false}/>)}
     </div>
     <div className="feature-grid">
       <a className="feature-main" href={href('detail', story.id, direction)}>
-        <div className="feature-copy"><span>{leadMeta}</span><h3>{story.title}</h3><p>{story.description}</p><span className="feature-link">Читать</span></div>
+        <div className="feature-copy"><h3>{story.title}</h3><p>{story.description}</p></div>
       </a>
       {otherStories.length > 0 && <div className="feature-side">
         {otherStories.map((item) => <a key={item.id} href={href('detail', item.id, direction)}>
           <div className="feature-side__cover" aria-hidden="true"/>
-          <span><small>{item.direction} · {articles[item.id]?.time}</small><strong>{item.title}</strong><span className="feature-summary">{item.description}</span></span>
+          <span><strong>{item.title}</strong><span className="feature-summary">{item.description}</span></span>
         </a>)}
       </div>}
     </div>
-  </section>;
+  </ShelfSection>;
 }
 
 export function Music({ route, recordings }: {
@@ -291,6 +287,7 @@ export function Music({ route, recordings }: {
   const item = byId(route.id);
   const section = sections.find((entry) => entry.id === route.id);
   const all = direction ? items.filter((entry) => entry.direction === direction.title || entry.extraDirections?.includes(direction.title)) : items;
+  const overview = all.filter((entry) => !featuredIds[entry.type] || featuredIds[entry.type].includes(entry.id));
   const showOverview = route.page === 'home' || (route.page === 'direction' && direction !== undefined);
 
   const audio = (clip: Clip) => <ClipButton clip={clip} current={recordings.current} playing={recordings.playing} play={recordings.play}/>;
@@ -309,8 +306,8 @@ export function Music({ route, recordings }: {
     {direction && (route.page === 'catalog' || articlePage) && <><a href={href('direction', directionId)}>{direction.title}</a><span aria-hidden="true">/</span></>}
     <span aria-current="page">{route.page === 'direction' ? direction?.title : route.page === 'catalog' ? [section?.title, section?.script].filter(Boolean).join(' ') : (item && typeNames[item.type])}</span>
   </nav>;
-  const overviewTitle = direction?.title ?? 'Вся наша музыка';
-  const scriptStart = overviewTitle.lastIndexOf(' ') + 1;
+  const overviewTitle = direction?.title ?? 'Музыкальный мир РИФ FM';
+  const scriptStart = direction ? overviewTitle.lastIndexOf(' ') + 1 : overviewTitle.indexOf('РИФ FM');
 
   return (
     <main className={`container music-main music-main--${route.page}`} id="music-content" tabIndex={-1}>
@@ -319,13 +316,14 @@ export function Music({ route, recordings }: {
       {showOverview && <>
         <header className="music-title">
           <Heading first={overviewTitle.slice(0, scriptStart).trimEnd()} script={overviewTitle.slice(scriptStart)} level={1}/>
-          <p>{direction?.description ?? 'Знакомые голоса, новые имена и истории за любимыми песнями.'}</p>
+          <p>{direction?.description ?? 'Здесь мы собрали альбомы, истории об исполнителях и записи наших передач. Можно начать с прослушивания любимой песни, а можно найти что-то, чего раньше не слышали.'}</p>
         </header>
         <Directions active={directionId}/>
         <CoverFeature list={pick(editorialIds).filter((entry) => all.includes(entry))} direction={directionId}/>
-        {sections.map((group) => <Shelf key={group.id} title={group.title} script={group.script}
-          list={all.filter((entry) => entry.type === group.id && !editorialIds.includes(entry.id))}
-          direction={directionId} more={href('catalog', group.id, directionId)} moreLabel={catalogLabels[group.id]}
+        {sections.filter((group) => group.id !== 'article').map((group) => <Shelf key={group.id} title={group.title} script={group.script}
+          list={overview.filter((entry) => entry.type === group.id)}
+          direction={directionId}
+          more={hasCatalog(group.id) ? { href: href('catalog', group.id, directionId), label: catalogLabels[group.id] } : undefined}
           desktopColumns={group.desktopColumns}/>)}
       </>}
 

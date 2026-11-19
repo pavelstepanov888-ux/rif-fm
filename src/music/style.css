@@ -82,11 +82,26 @@
 .direction-tile .direction-tile__icon {
   width: var(--direction-icon-size);
   height: var(--direction-icon-size);
-  background: var(--write-to-air-blue-gradient);
 }
 .direction-label { display: grid; gap: var(--spacing-4); min-width: 0; overflow-wrap: anywhere; }
 .direction-label strong { font-size: var(--typography-p2-bold-size); line-height: var(--typography-p2-bold-line-height); font-weight: 700; }
-.direction-label small { color: color-mix(in srgb, var(--text-primary) 58%, var(--rif-075192)); font-size: var(--typography-p3-medium-size); line-height: var(--typography-p3-medium-line-height); font-weight: 500; }
+.direction-label small { color: var(--music-caption-text); font-size: var(--typography-p3-medium-size); line-height: var(--typography-p3-medium-line-height); font-weight: 500; }
+@supports (grid-template-rows: subgrid) {
+  .direction-tile {
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    row-gap: var(--spacing-4);
+  }
+  .direction-tile__icon { grid-area: 1 / 1 / 3 / 2; }
+  .direction-label { display: contents; }
+  .direction-label strong, .direction-label small {
+    grid-column: 2;
+    align-self: start;
+    min-width: 0;
+  }
+  .direction-label strong { grid-row: 1; }
+  .direction-label small { grid-row: 2; }
+}
 .music-section { margin: 0 0 var(--spacing-64); }
 .shelf-heading { display: flex; margin-bottom: var(--layout-section-content-gap); }
 .shelf-heading h2 { font-size: var(--typography-h3-size); line-height: var(--typography-h3-line-height); }
@@ -94,20 +109,6 @@
 :is(.music-main--home, .music-main--direction) .shelf-heading h2 { font-size: var(--typography-h2-size); line-height: var(--typography-h2-line-height); }
 :is(.music-main--home, .music-main--direction) .shelf-heading .heading__script { font-size: var(--typography-h2-lobster-size); line-height: var(--typography-h2-lobster-line-height); }
 .shelf-heading .heading > span { white-space: normal; }
-.shelf-heading__link { display: flex; align-items: center; gap: var(--spacing-8); min-width: 0; }
-.shelf-heading__link .shelf-heading__chevron {
-  width: var(--spacing-32);
-  height: var(--spacing-32);
-  flex-basis: var(--spacing-32);
-  color: var(--text-primary);
-  scale: 1.15;
-  transform: rotate(-90deg);
-}
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .shelf-heading__chevron { transition: transform .18s ease; }
-  .shelf-heading__link:hover .shelf-heading__chevron { transform: translateX(var(--spacing-4)) rotate(-90deg); }
-}
-
 .episode-list { display: grid; gap: var(--spacing-16); list-style: none; margin: 0; padding: 0; }
 .episode-list__link { display: flex; align-items: center; gap: var(--spacing-16); border-radius: var(--spacing-16); color: var(--text-primary); }
 .episode-list__cover { width: var(--spacing-64); aspect-ratio: 1; flex-shrink: 0; object-fit: cover; border-radius: inherit; }
@@ -124,11 +125,8 @@
   color: var(--text-primary);
 }
 .feature-copy { padding: var(--spacing-32) var(--spacing-40); display: grid; justify-items: start; gap: var(--spacing-12); max-width: 60ch; }
-.feature-copy > span:first-child { color: var(--rif-075192); font-size: var(--typography-p3-medium-size); line-height: var(--typography-p3-medium-line-height); }
 .feature-copy h3 { font-size: var(--typography-h3-size); line-height: var(--typography-h3-line-height); letter-spacing: -.025em; }
 .feature-copy p { max-width: 40ch; font-size: var(--typography-p2-medium-size); line-height: var(--typography-p2-medium-line-height); font-weight: 500; }
-.feature-link { display: flex; gap: var(--spacing-8); align-items: center; margin-top: var(--spacing-8); }
-.feature-link .icon { width: 20px; height: 20px; }
 .feature-side { display: grid; gap: var(--spacing-12); grid-template-rows: repeat(2, 1fr); }
 .feature-side a {
   display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: var(--spacing-16);
@@ -316,7 +314,7 @@
 }
 
 @media (max-width: 1100px) {
-  .direction-tile { --direction-icon-size: var(--spacing-32); gap: var(--spacing-8); padding-inline: var(--spacing-12); }
+  .direction-tile { --direction-icon-size: var(--spacing-32); column-gap: var(--spacing-8); padding-inline: var(--spacing-12); }
   .direction-label strong { font-size: var(--typography-p3-bold-size); line-height: var(--typography-p3-bold-line-height); }
 }
 
