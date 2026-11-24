@@ -1,17 +1,21 @@
+export const articleSection = {
+  id: 'article', title: 'Истории', script: 'о музыке', label: 'Статья', desktopColumns: 3,
+} as const;
+
 export const sections = [
-  { id: 'release', title: 'Новая музыка и', script: 'релизы', label: 'Релиз', desktopColumns: 6 },
+  articleSection,
+  { id: 'release', title: 'Новая музыка и', script: 'релизы', label: 'Релиз', desktopColumns: 5 },
   { id: 'program', title: 'Музыкальные', script: 'программы', label: 'Программа', desktopColumns: 5 },
   { id: 'episode', title: 'Записи', script: 'эфиров', label: 'Запись эфира', desktopColumns: 5 },
   { id: 'artist', title: '', script: 'Артисты', label: 'Артист', desktopColumns: 5 },
-  { id: 'article', title: 'Истории', script: 'о музыке', label: 'Статья', desktopColumns: 5 },
 ] as const;
-export type Item = { id: string; type: string; title: string; subtitle: string; image: string; coverScale?: number; direction: string; description: string; related?: string[]; extraDirections?: string[]; duration?: string; format?: 'audio' | 'video'; host?: string; guest?: string; airedAt?: string; };
-export const articleCover = 'cover-article.webp';
+export type Item = { id: string; type: string; title: string; subtitle: string; image: string; coverScale?: number; coverPosition?: string; direction: string; description: string; related?: string[]; extraDirections?: string[]; duration?: string; format?: 'audio' | 'video'; host?: string; guest?: string; airedAt?: string; };
+const episodeCover = 'video-poster.png';
 const winterSelectionDescription = 'Музыкальная подборка нашей редакции для уютного зимнего вечера';
 const wordsStoryDescription = 'Одни и те же строки можно прочитать или спеть. Впечатление может быть разным. Разбираемся, почему так происходит.';
 
 export const featuredIds: Record<string, string[]> = {
-  release: ['apina-dance', 'september-zoloto', 'rubalskaya-dama', 'syutkin-to-chto-nado'],
+  release: ['apina-dance', 'september-zoloto', 'rubalskaya-dama', 'syutkin-to-chto-nado', 'notebook'],
   artist: ['krutoy', 'boyarsky', 'aguzarova', 'september'],
 };
 
@@ -27,8 +31,21 @@ export const items: Item[] = [
   // https://commons.wikimedia.org/wiki/File:Жанна_Агузарова.jpg
   // https://creativecommons.org/licenses/by-sa/3.0/
   {id:'aguzarova',type:'artist',title:'Жанна Агузарова',subtitle:'Певица',image:'portrait-aguzarova.jpg',direction:'Советская эстрада',extraDirections:['Поп-музыка'],description:'Узнаваемый голос группы «Браво» и сольные записи Жанны Агузаровой. Возвращаемся к музыке, в которой встречаются рок-н-ролл и эстрада.',related:['song-story','calendar-sheet']},
-  // Group portrait and album artwork from https://september-group.ru/
-  {id:'september',type:'artist',title:'Группа «Сентябрь»',subtitle:'Музыкальная группа',image:'portrait-september.png',direction:'Поп-музыка',description:'Песни о любви в исполнении Вячеслава Величковского и Александра Граты. Слушаем альбом «Золото осени».',related:['september-zoloto','song-story']},
+  // Studio group portrait from https://24smi.org/celebrity/475479-gruppa-sentiabr.html
+  {
+    id: 'september',
+    type: 'artist',
+    title: 'Группа «Сентябрь»',
+    subtitle: 'Музыкальная группа',
+    image: 'portrait-september-studio.webp',
+    direction: 'Поп-музыка',
+    description: `Группа «Сентябрь» — уникальное явление российской эстрады. Каждое появление музыкантов на сцене — это невероятное красочное шоу, полное драматургии, неимоверной энергии, неподдельных эмоций и, конечно же, шикарной музыки.
+
+Коллектив придерживается своего элегантного музыкального стиля, сохраняя баланс между поэзией и мелодичностью, и позволяет слушателю проникнуться настроением праздника, погрузившись в прослушивание альбома. Каждый альбом группы — это единый композиционный ансамбль, в котором ничто не нарушает целостности пластинки.
+
+В центре творчества «Сентября» – конечно же, женщины. Удивительные, восхитительные, приковывающие взгляд, пленяющие сердце. Именно им посвящен каждый из 13 полноформатных альбомов группы: в них лирические герои рассказывают истории настоящей любви в разном ключе. Здесь и нежность, и гордость, и счастливые надежды, и горечь разлуки… И каждая из этих историй заставляет слушателей искренне сопереживать ее героям, откликаясь в сердце собственными воспоминаниями.`,
+    related: ['september-zoloto', 'song-story'],
+  },
   // https://rubala.ru/
   {id:'rubalskaya',type:'artist',title:'Лариса Рубальская',subtitle:'Поэтесса и автор песен',image:'portrait-rubalskaya.png',direction:'Авторская песня',extraDirections:['Советская эстрада','Романс'],description:'Стихи Ларисы Рубальской звучат в песнях разных исполнителей. Знакомимся с автором через её строки и музыку.',related:['rubalskaya-dama','words-story']},
   // Album artwork and track list from Apple Music.
@@ -69,27 +86,67 @@ export const items: Item[] = [
   // Crop the blue border baked into the 600 × 600 source cover.
   {id:'come-away',type:'release',title:'Come Away With Me',subtitle:'Norah Jones',image:'album-norah-jones.jpg',coverScale:1.09,direction:'Поп-музыка',description:'Музыка для вечера, в котором можно никуда не торопиться.',related:['norah','soul-night']},
   {id:'ladies',type:'release',title:'Ladies & Gentlemen',subtitle:'George Michael',image:'album-george-michael.jpg',direction:'Поп-музыка',description:'Песни, которые остаются рядом. Подборка для нового знакомства с известным голосом.',related:['george','song-story']},
-  {id:'song-story',type:'program',title:'История одной песни',subtitle:'Игорь Федоров',image:'cover-story.png',direction:'Поп-музыка',extraDirections:['Советская эстрада','Авторская песня','Романс'],description:'Как родилась знакомая мелодия, что вдохновляло её авторов и кто первым спел эту песню? В каждом выпуске Игорь Федоров и гость студии разбирают одну композицию. Они возвращаются к истории её создания, вслушиваются в слова и обращают внимание на детали, которые легко пропустить, даже если знаешь песню наизусть.',related:['melody-episode','studio-talk','melody-story','studio-story']},
-  {id:'author-hour',type:'program',title:'Стихи на каждый день',subtitle:'Игорь Федоров',image:'cover-poetry.png',direction:'Авторская песня',description:'Ведущие и гости студии читают вслух любимые и малоизвестные стихи. В эфире звучат и песни, написанные на эти строки. Слушаем, как меняется интонация одного и того же текста, когда к словам добавляется мелодия, и какие строки после этого запоминаются по-новому.',related:['poetry-episode','words-story','notebook']},
-  {id:'calendar-sheet',type:'program',title:'Лист календаря',subtitle:'Этот день в истории музыки',image:'cover-calendar.png',direction:'Поп-музыка',extraDirections:['Советская эстрада','Романс'],description:'Вспоминаем, что произошло в этот день в истории музыки. Кто из любимых исполнителей родился, какие записи вышли и какие песни прозвучали впервые. За каждой датой есть история, а за знакомой записью — момент, когда её услышали впервые. Возвращаемся к этим событиям через музыку.',related:['road-episode','guitar-story']},
-  {id:'soul-night',type:'episode',title:'Голоса тихого вечера',subtitle:'История одной песни',image:'video-poster.png',direction:'Поп-музыка',format:'audio',host:'Игорь Федоров',guest:'Михаил Александров',duration:'42:18',airedAt:'2026-11-11T10:00:00+03:00',description:'Разговор о том, почему спокойная музыка порой говорит громче любых слов.',related:['song-story','norah','come-away']},
-  {id:'studio-talk',type:'episode',title:'Песня начинается с истории',subtitle:'В гостях Михаил Александров',image:'video-poster.png',direction:'Авторская песня',format:'video',host:'Игорь Федоров',guest:'Михаил Александров',duration:'36:24',airedAt:'2026-11-13T10:00:00+03:00',description:'Встреча в студии: об авторах, первых строчках и песнях, которые помнишь всю жизнь.',related:['song-story','mikhail','words-story']},
-  {id:'melody-episode',type:'episode',title:'Почему мы узнаём мелодию',subtitle:'История одной песни',image:'video-poster.png',direction:'Поп-музыка',format:'audio',host:'Игорь Федоров',guest:'Михаил Александров',duration:'28:40',airedAt:'2026-11-12T10:00:00+03:00',description:'Обсуждаем, какие детали делают песню узнаваемой.',related:['song-story','george']},
-  {id:'road-episode',type:'episode',title:'Премьеры, которые стали классикой',subtitle:'Лист календаря',image:'video-poster.png',direction:'Поп-музыка',format:'audio',airedAt:'2026-11-13T14:00:00+03:00',description:'Возвращаемся к релизам, которые со временем стали классикой, и вспоминаем, как их слушали в день премьеры.',related:['calendar-sheet','sting','stars']},
-  {id:'poetry-episode',type:'episode',title:'Стихи, которые стали песнями',subtitle:'Стихи на каждый день',image:'video-poster.png',direction:'Авторская песня',format:'audio',host:'Игорь Федоров',airedAt:'2026-11-13T16:00:00+03:00',description:'Читаем стихи вслух и обсуждаем, как меняется интонация, когда те же строки звучат в песне.',related:['author-hour','words-story','notebook']},
-  {id:'sade-story',type:'article',title:'Падает снег',subtitle:winterSelectionDescription,image:articleCover,direction:'Поп-музыка',description:winterSelectionDescription,related:['sade','diamond','soul-night','studio-story']},
-  {id:'guitar-story',type:'article',title:'История в нескольких аккордах',subtitle:'Что мы слышим между строк',image:articleCover,direction:'Поп-музыка',description:'Любимая песня может начинаться с простого рисунка гитары. Прислушиваемся к знакомой записи ещё раз.',related:['sting','ten-summoner']},
-  {id:'words-story',type:'article',title:'Когда стихи становятся песней',subtitle:wordsStoryDescription,image:articleCover,direction:'Авторская песня',description:wordsStoryDescription,related:['author-hour','studio-talk','mikhail']},
-  {id:'melody-story',type:'article',title:'Песня, которую хочется напевать',subtitle:'Мелодии, которые остаются с нами',image:articleCover,direction:'Поп-музыка',description:'У каждого есть мелодия, которая возвращает в определённый момент жизни.',related:['song-story','melody-episode']},
-  { id:'studio-story', type:'article', title:'У микрофона', subtitle:'Фотоистория из студии', image:articleCover, direction:'Авторская песня', description:'Что происходит в студии за несколько минут до эфира? Заглядываем за стекло и листаем рабочие заметки.', related:['studio-talk','words-story','author-hour','mikhail'] },
-  { id:'sade-news', type:'article', title:'Sade в фонотеке Риф FM', subtitle:'Новость редакции', image:articleCover, direction:'Поп-музыка', description:'В демонстрационной фонотеке собрали записи и материалы, с которых можно начать знакомство с Sade.', related:['sade','diamond','sade-story'] },
+  // Artwork from the Tilda home and schedule pages, with titles rendered by MusicCover.
+  {id:'song-story',type:'program',title:'История одной песни',subtitle:'Игорь Федоров',image:'tilda-program-story-art.webp',direction:'Поп-музыка',extraDirections:['Советская эстрада','Авторская песня','Романс'],description:'Как родилась знакомая мелодия, что вдохновляло её авторов и кто первым спел эту песню? В каждом выпуске Игорь Федоров и гость студии разбирают одну композицию. Они возвращаются к истории её создания, вслушиваются в слова и обращают внимание на детали, которые легко пропустить, даже если знаешь песню наизусть.',related:['melody-episode','studio-talk','melody-story','studio-story']},
+  {id:'author-hour',type:'program',title:'Стихи на каждый день',subtitle:'Игорь Федоров',image:'tilda-program-poetry-art.webp',direction:'Авторская песня',description:'Ведущие и гости студии читают вслух любимые и малоизвестные стихи. В эфире звучат и песни, написанные на эти строки. Слушаем, как меняется интонация одного и того же текста, когда к словам добавляется мелодия, и какие строки после этого запоминаются по-новому.',related:['poetry-episode','words-story','notebook']},
+  {id:'calendar-sheet',type:'program',title:'Лист календаря',subtitle:'Этот день в истории музыки',image:'tilda-program-calendar-art.webp',direction:'Поп-музыка',extraDirections:['Советская эстрада','Романс'],description:'Вспоминаем, что произошло в этот день в истории музыки. Кто из любимых исполнителей родился, какие записи вышли и какие песни прозвучали впервые. За каждой датой есть история, а за знакомой записью — момент, когда её услышали впервые. Возвращаемся к этим событиям через музыку.',related:['road-episode','guitar-story']},
+  {id:'soul-night',type:'episode',title:'Голоса тихого вечера',subtitle:'История одной песни',image:episodeCover,direction:'Поп-музыка',format:'audio',host:'Игорь Федоров',guest:'Михаил Александров',duration:'42:18',airedAt:'2026-11-11T10:00:00+03:00',description:'Разговор о том, почему спокойная музыка порой говорит громче любых слов.',related:['song-story','norah','come-away']},
+  {id:'studio-talk',type:'episode',title:'Песня начинается с истории',subtitle:'В гостях Михаил Александров',image:episodeCover,direction:'Авторская песня',format:'video',host:'Игорь Федоров',guest:'Михаил Александров',duration:'36:24',airedAt:'2026-11-13T10:00:00+03:00',description:'Встреча в студии: об авторах, первых строчках и песнях, которые помнишь всю жизнь.',related:['song-story','mikhail','words-story']},
+  {id:'melody-episode',type:'episode',title:'Почему мы узнаём мелодию',subtitle:'История одной песни',image:episodeCover,direction:'Поп-музыка',format:'audio',host:'Игорь Федоров',guest:'Михаил Александров',duration:'28:40',airedAt:'2026-11-12T10:00:00+03:00',description:'Обсуждаем, какие детали делают песню узнаваемой.',related:['song-story','george']},
+  {id:'road-episode',type:'episode',title:'Премьеры, которые стали классикой',subtitle:'Лист календаря',image:episodeCover,direction:'Поп-музыка',format:'audio',airedAt:'2026-11-13T14:00:00+03:00',description:'Возвращаемся к релизам, которые со временем стали классикой, и вспоминаем, как их слушали в день премьеры.',related:['calendar-sheet','sting','stars']},
+  {id:'poetry-episode',type:'episode',title:'Стихи, которые стали песнями',subtitle:'Стихи на каждый день',image:episodeCover,direction:'Авторская песня',format:'audio',host:'Игорь Федоров',airedAt:'2026-11-13T16:00:00+03:00',description:'Читаем стихи вслух и обсуждаем, как меняется интонация, когда те же строки звучат в песне.',related:['author-hour','words-story','notebook']},
+  {id:'sade-story',type:'article',title:'Падает снег',subtitle:winterSelectionDescription,image:'portrait-krutoy.jpg',coverPosition:'center 12%',direction:'Поп-музыка',description:winterSelectionDescription,related:['sade','diamond','soul-night','studio-story']},
+  {id:'guitar-story',type:'article',title:'История в нескольких аккордах',subtitle:'Что мы слышим между строк',image:'portrait-syutkin.jpg',coverPosition:'center 22%',direction:'Поп-музыка',description:'Любимая песня может начинаться с простого рисунка гитары. Прислушиваемся к знакомой записи ещё раз.',related:['sting','ten-summoner']},
+  // Concert photograph from https://www.svoboda.org/a/28630605.html
+  {id:'words-story',type:'article',title:'Когда стихи становятся песней',subtitle:wordsStoryDescription,image:'okudzhava-stage.jpg',coverPosition:'center 32%',direction:'Авторская песня',description:wordsStoryDescription,related:['author-hour','studio-talk','mikhail']},
+  {id:'melody-story',type:'article',title:'Песня, которую хочется напевать',subtitle:'Мелодии, которые остаются с нами',image:'album-apina-dance.jpg',coverPosition:'center 36%',direction:'Поп-музыка',description:'У каждого есть мелодия, которая возвращает в определённый момент жизни.',related:['song-story','melody-episode']},
+  // Concert photograph from https://www.kinoafisha.info/events/mihail-boyarskiy--artist-scenicheskogo-temperamenta/
+  { id:'studio-story', type:'article', title:'У микрофона', subtitle:'Фотоистория из студии', image:'boyarsky-stage.jpg', coverPosition:'center 12%', direction:'Авторская песня', description:'Что происходит в студии за несколько минут до эфира? Заглядываем за стекло и листаем рабочие заметки.', related:['studio-talk','words-story','author-hour','mikhail'] },
+  // Group photograph from https://tunnel.ru/post-gruppa-sentyabr-ot-sentyabrya-do-sentyabrya-2022
+  { id:'sade-news', type:'article', title:'Sade в фонотеке Риф FM', subtitle:'Новость редакции', image:'september-group-photo.jpg', coverPosition:'center 25%', direction:'Поп-музыка', description:'В демонстрационной фонотеке собрали записи и материалы, с которых можно начать знакомство с Sade.', related:['sade','diamond','sade-story'] },
 ];
 
+const rubalskayaPreview = { image: 'portrait-rubalskaya.png', position: 'left center', scale: 2.25, translate: '28% 56%' };
+export const allMusicDirection = {
+  id: '', title: 'Вся музыка', short: '',
+  previews: [
+    { image: 'portrait-september-studio.webp', position: 'center', scale: 1.0, translate: '0 0' },
+    { image: 'portrait-apina.png', position: 'center top', scale: 1.35, translate: '0 8%' },
+  ],
+};
 export const directions = [
-  { id: 'songwriter', title: 'Авторская песня', short: 'Голос, гитара и слово', description: 'Песни, в которых сначала слышишь человека. Разговоры с авторами, акустические записи и истории о том, как стихи становятся музыкой.' },
-  { id: 'soviet', title: 'Советская эстрада', short: 'Мелодии, которые мы помним', description: 'Знакомые голоса и песни советской эстрады. Возвращаемся к любимым записям и узнаём истории их создания.' },
-  { id: 'pop', title: 'Поп-музыка', short: 'Любимые песни и новые имена', description: 'Знакомые мелодии и новые имена. Слушаем альбомы, встречаемся с исполнителями и говорим о песнях, которые остаются с нами.' },
-  { id: 'romance', title: 'Романс', short: 'О любви в каждой строке', description: 'Выразительные голоса и истории о любви. Слушаем романсы и замечаем, как музыка раскрывает знакомые строки.' },
+  {
+    id: 'songwriter', title: 'Авторская песня', short: 'Истории в песнях',
+    description: 'Есть песни, в которых узнаёшь себя — свои мысли, чувства, переживания. Они напоминают о дорогих людях, любимых местах и моментах, которые хочется сохранить в памяти. В авторской песне каждое слово имеет значение, а мелодия помогает глубже почувствовать его смысл. И порой даже в давно знакомых строчках вдруг слышишь что-то новое, близкое именно тебе.',
+    previews: [
+      { image: 'album-okudzhava-songs.jpg', position: 'center', scale: 1.35, translate: '-4% 12%' },
+      rubalskayaPreview,
+    ],
+  },
+  {
+    id: 'soviet', title: 'Советская эстрада', short: 'Песни нашей памяти',
+    description: 'Есть песни, которые мы полюбим и помним уже много лет. Они звучали по радио, с пластинок, на семейных праздниках. В них – голоса любимых исполнителей, красивые мелодии и слова, которые не теряют своего смысла и сегодня. Советская эстрада – это не просто музыка прошлых лет. Это песни которые хочется слушать и петь.',
+    previews: [
+      { image: 'portrait-krutoy.jpg', position: 'center', scale: 2.15, translate: '-14% 49%' },
+      { image: 'portrait-aguzarova.jpg', position: 'center top', scale: 1.6, translate: '-8% 28%' },
+    ],
+  },
+  {
+    id: 'pop', title: 'Поп-музыка', short: 'Любимые хиты',
+    description: 'У каждого есть песни, которые хочется слушать снова и снова. Поп-музыка всегда рядом с нами. В ней легко найти песню под любое настроение — от зажигательных танцевальных хитов до нежных, проникновенных баллад. Мы любим её за яркие мелодии, узнаваемые голоса и припевы, которым хочется подпевать.',
+    previews: [
+      { image: 'album-apina-dance.jpg', position: 'center', scale: 2.6, translate: '-67% 31%' },
+      { image: 'album-syutkin-to-chto-nado.jpg', position: 'center', scale: 2.35, translate: '39% 45%' },
+    ],
+  },
+  {
+    id: 'romance', title: 'Романс', short: 'Музыка чувств',
+    description: 'Романс – это музыкальный способ рассказать о самом сокровенном. О любви и разлуке, о нежности, надежде и самом сокровенном. В песнях этого жанра каждое слово наполнено чувством, а мелодия помогает выразить то, что порой трудно сказать вслух. И сколько бы лет ни прошло, романс продолжает трогать наши сердца, ведь время не властно над чувствами.',
+    previews: [
+      { image: 'portrait-boyarsky.png', position: 'center', scale: 1.8, translate: '-25% 20%' },
+      rubalskayaPreview,
+    ],
+  },
 ];
 
 export const tracks: Record<string, { title: string; duration?: string }[]> = {

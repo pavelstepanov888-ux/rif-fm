@@ -3,7 +3,7 @@
   justify-content: flex-end;
 }
 
-@media (min-width: 768px) and (max-width: 1100px) {
+@media (768px <= width <= 1240px) {
   .header__inner { gap: var(--spacing-8); }
   .header__slot { min-width: max-content; }
   .brand img { width: min(135px, 100%); }
@@ -64,8 +64,7 @@
 
 .write-to-air__topics li + li { border-top: 1px solid var(--background-tertiary); }
 
-.write-to-air__topics .button--tertiary,
-:root[data-prototype-version='2'] .write-to-air__topics .button--tertiary {
+.write-to-air__topics .button--tertiary {
   justify-content: space-between;
   width: 100%;
   padding-block: var(--spacing-16);
@@ -85,8 +84,7 @@
 
 @media (hover: hover) {
   .write-to-air__header .button--icon:hover { background: var(--controls-secondary-hover, var(--controls-secondary-active)); }
-  .write-to-air__topics .button--tertiary:hover,
-  :root[data-prototype-version='2'] .write-to-air__topics .button--tertiary:hover { color: var(--text-accent-secondary); }
+  .write-to-air__topics .button--tertiary:hover { color: var(--text-accent-secondary); }
 }
 
 .write-to-air__form,
@@ -158,8 +156,7 @@
   visibility: hidden;
 }
 
-.write-to-air__form :is(textarea, input)::placeholder { color: var(--text-secondary); }
-:root:is([data-prototype-version='1'], [data-prototype-version='3']) .write-to-air__form :is(textarea, input)::placeholder { color: #87949f; opacity: 1; }
+.write-to-air__form :is(textarea, input)::placeholder { color: #87949f; opacity: 1; }
 .write-to-air__form :is(textarea, input):focus-visible {
   outline: 2px solid var(--stroke-focus);
   outline-offset: 1px;

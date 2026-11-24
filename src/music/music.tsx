@@ -1,10 +1,10 @@
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Avatar, Button, Dialog, Heading, Icon } from '../components/ui';
 import { PlaylistFilter } from '../components/playlist-filter';
 import { asset } from '../assets';
-import { articleCover, byId, directions, episodePrograms, featuredIds, items, pick, programs, sections, tracks, type Item } from './data';
+import { allMusicDirection, articleSection, byId, directions, episodePrograms, featuredIds, items, pick, programs, sections, tracks, type Item } from './data';
 import { articleReferences, articles, searchMusic, type ArticleBlock, type ArticleLink } from './articles';
-import { catalogLabels, hasCatalog, musicHref as href, type MusicRoute } from './navigation';
+import { catalogLabels, hasCatalog, isMusicOverview, musicHref as href, programDetailHref, programsHref, type MusicRoute } from './navigation';
 import { type Clip, type RecordingState } from './recordings';
 
 const typeNames: Record<string, string> = Object.fromEntries(sections.map(({ id, label }) => [id, label]));
@@ -37,16 +37,41 @@ function cardMeta(item: Item) {
 }
 
 function MusicCover({ item, loading }: { item: Item; loading?: 'lazy' }) {
-  const style = item.coverScale === undefined ? undefined : { scale: item.coverScale };
-  return <img src={asset(item.image)} alt="" loading={loading} style={style}/>;
+  return <>
+    <img src={asset(item.image)} alt="" loading={loading}
+      style={{ scale: item.coverScale, objectPosition: item.coverPosition }}/>
+    {item.type === 'program' && <span className="program-cover-title" aria-hidden="true">{item.title}</span>}
+  </>;
 }
 
-function MediaCard({ item, direction = '', showMeta = true }: { item: Item; direction?: string; showMeta?: boolean }) {
-  return <a className={'music-card music-card--' + item.type} href={href('detail', item.id, direction)}>
+function EpisodeCard({ item, direction = '', showDate = false, compact = false }: {
+  item: Item; direction?: string; showDate?: boolean; compact?: boolean;
+}) {
+  const video = item.format === 'video';
+  return <a className="music-card episode-card" href={href('detail', item.id, direction)}>
+    <div className="episode-card__cover">
+      <MusicCover item={item} loading="lazy"/>
+      <span className="episode-card__icon"><Icon name={video ? 'video' : 'play'}/></span>
+    </div>
+    <div className="episode-card__copy">
+      <div className="episode-card__meta">
+        <span>{video ? 'Видео' : 'Аудио'}</span>
+        {!compact && item.duration && <span>{item.duration}</span>}
+      </div>
+      <h3>{item.title}</h3>
+      {!compact && <p>{showDate && item.guest ? `В гостях — ${item.guest}` : item.subtitle}</p>}
+      {showDate && item.airedAt && <time dateTime={item.airedAt}>{formatBroadcastDate(item.airedAt)}</time>}
+    </div>
+  </a>;
+}
+
+function MediaCard({ item, direction = '', showMeta = true, fromPrograms = false }: {
+  item: Item; direction?: string; showMeta?: boolean; fromPrograms?: boolean;
+}) {
+  if (item.type === 'episode') return <EpisodeCard item={item} direction={direction}/>;
+  return <a className={'music-card music-card--' + item.type} href={fromPrograms ? programDetailHref(item.id) : href('detail', item.id, direction)}>
     <div className="music-card__art">
-      {item.type !== 'article' && <MusicCover item={item} loading="lazy"/>}
-      {item.type === 'program' && <span aria-hidden="true" className="program-title">{item.title}</span>}
-      {item.type === 'episode' && <span className="media-chip"><Icon name={item.format === 'video' ? 'video' : 'play'}/>{item.format === 'video' ? 'Видео' : 'Аудио'}</span>}
+      <MusicCover item={item} loading="lazy"/>
     </div>
     <div className="card-copy">
       {showMeta && (item.type === 'article' || item.type === 'release') && <span className="eyebrow">{cardMeta(item)}</span>}
@@ -66,45 +91,44 @@ function ShelfSection({ title, script, more, className = '', children }: {
     <div className="shelf-heading section__header">
       {script ? <Heading first={title} script={script}/> : <h2>{title}</h2>}
       {more && <a className="button button--tertiary button--m section__link" href={more.href}>
-        {more.label}<Icon name="arrow"/>
+        {more.label}<Icon name="chevron-right"/>
       </a>}
     </div>
     {children}
     {more && <a className="button button--secondary button--m section__mobile-action" href={more.href}>
-      {more.label}<Icon name="arrow"/>
+      {more.label}<Icon name="chevron-right"/>
     </a>}
   </section>;
 }
 
-function Shelf({ title, script, list, more, direction = '', desktopColumns }: {
+function Shelf({ title, script, list, more, previewLimit, direction = '', trimPreview = false }: {
   title: string; script?: string; list: Item[]; more?: CatalogLink;
-  direction?: string; desktopColumns?: 5 | 6;
+  previewLimit?: number; direction?: string; trimPreview?: boolean;
 }) {
   if (!list.length) return null;
-  const preview = more ? list.slice(0, desktopColumns ?? 4) : list;
-  return <ShelfSection title={title} script={script} more={more}>
-    <div className="music-shelf" data-single={preview.length === 1 || undefined} data-desktop-columns={desktopColumns}>
+  const type = list[0].type;
+  const desktopColumns = sections.find((section) => section.id === type)?.desktopColumns;
+  const preview = more ? list.slice(0, previewLimit ?? desktopColumns) : list;
+  return <ShelfSection title={title} script={script} more={preview.length < list.length ? more : undefined}>
+    <div className={type === 'episode' ? 'episode-grid' : 'music-shelf'}
+      data-desktop-columns={desktopColumns}
+      data-trim-preview={trimPreview || undefined}>
       {preview.map((item) => <MediaCard key={item.id} item={item} direction={direction}/>)}
     </div>
   </ShelfSection>;
 }
 
-function EpisodeList({ title, episodes, cover, direction }: { title: string; episodes: Item[]; cover: string; direction: string }) {
+function EpisodeList({ title, episodes, direction, compact = false }: {
+  title: string; episodes: Item[]; direction: string; compact?: boolean;
+}) {
   if (!episodes.length) return null;
-  return <section className="music-section" aria-label={title}>
-    <div className="shelf-heading"><h2>{title}</h2></div>
-    <ul className="episode-list" role="list">
+  return <ShelfSection title={title}>
+    <ul className="episode-grid" role="list">
       {episodes.map((episode) => <li key={episode.id}>
-        <a className="episode-list__link" href={href('detail', episode.id, direction)}>
-          <img className="episode-list__cover" src={asset(cover)} alt="" loading="lazy"/>
-          <div className="episode-list__copy">
-            <h3>{episode.guest ? `В гостях — ${episode.guest}` : episode.title}</h3>
-            {episode.airedAt && <time dateTime={episode.airedAt}>{formatBroadcastDate(episode.airedAt)}</time>}
-          </div>
-        </a>
+        <EpisodeCard item={episode} direction={direction} showDate compact={compact}/>
       </li>)}
     </ul>
-  </section>;
+  </ShelfSection>;
 }
 
 function EpisodeRelatedSections({ item, program, guest, direction }: { item: Item; program?: Item; guest?: Item; direction: string }) {
@@ -113,7 +137,7 @@ function EpisodeRelatedSections({ item, program, guest, direction }: { item: Ite
   if (guest) artists.unshift(guest);
 
   return <>
-    {program && <EpisodeList title="Другие выпуски" episodes={pick((programs[program.id]?.episodes ?? []).filter((id) => id !== item.id))} cover={program.image} direction={direction}/>}
+    {program && <EpisodeList title="Другие выпуски" episodes={pick((programs[program.id]?.episodes ?? []).filter((id) => id !== item.id))} direction={direction}/>}
     <Shelf title="Читайте также" list={related.filter((entry) => entry.type === 'article')} direction={direction}/>
     <Shelf title="Артисты и гости" list={artists} direction={direction}/>
   </>;
@@ -127,12 +151,44 @@ function RelatedSections({ item, direction }: { item: Item; direction: string })
   ));
 }
 
-function Directions({ active }: { active?: string }) {
-  return <nav className="directions" aria-label="Музыкальные направления">
-    {directions.map((direction) => <a key={direction.id} className="direction-tile" aria-current={active === direction.id ? 'page' : undefined} href={href('direction', direction.id)}>
-      <img className="direction-tile__icon" src={asset(`icon-direction-${direction.id}.svg`)} alt=""/>
-      <span className="direction-label"><strong>{direction.title}</strong><small>{direction.short}</small></span>
+function Directions({ selected }: { selected?: string }) {
+  const navigation = useRef<HTMLElement>(null);
+  const filtering = selected !== undefined;
+  const options = filtering ? [allMusicDirection, ...directions] : directions;
+
+  useEffect(() => {
+    const rail = navigation.current;
+    const activeChip = rail?.querySelector('[aria-current]');
+    if (!rail || !activeChip || rail.scrollWidth <= rail.clientWidth) return;
+    const railBounds = rail.getBoundingClientRect();
+    const chipBounds = activeChip.getBoundingClientRect();
+    const padding = parseFloat(getComputedStyle(rail).scrollPaddingInlineStart) || 0;
+    const start = chipBounds.left - railBounds.left - padding;
+    const end = chipBounds.right - railBounds.right + padding;
+    if (start < 0 || end > 0) rail.scrollBy({ left: start < 0 ? start : end, behavior: 'instant' });
+  }, [selected]);
+
+  return <nav ref={navigation} className={`directions ${filtering ? 'directions--switcher' : 'directions--portraits'}`} aria-label="Музыкальные направления">
+    {options.map(({ id, title, short, previews }) => <a key={id} className="direction-tile"
+      href={id ? href('direction', id) : href()} aria-current={selected === id ? 'true' : undefined}>
+      <span className="direction-portraits">
+        {previews.map(({ image, position, scale, translate }) => <span className="direction-portraits__frame" key={image}>
+          <img src={asset(image)} alt="" decoding="async" style={{ objectPosition: position, scale, translate }}/>
+        </span>)}
+      </span>
+      <span className="direction-label"><strong>{title}</strong>{!filtering && <small>{short}</small>}</span>
     </a>)}
+  </nav>;
+}
+
+function OtherDirections({ active }: { active: string }) {
+  return <nav className="music-section other-directions" aria-labelledby="other-directions-title">
+    <h2 id="other-directions-title">Другие направления</h2>
+    <ul>
+      {directions.filter(({ id }) => id !== active).map(({ id, title }) => <li key={id}>
+        <a className="button button--tertiary" href={href('direction', id)}>{title}<Icon name="chevron-right"/></a>
+      </li>)}
+    </ul>
   </nav>;
 }
 
@@ -188,8 +244,7 @@ function ClipButton({ clip, current, playing, play }: { clip: Clip; current: Cli
 
 function ArticleObjectCard({ image, portrait, typeLabel, title, subtitle, action }: Pick<ArticleLink, 'image' | 'portrait' | 'title' | 'subtitle'> & { typeLabel?: string; action: ReactNode }) {
   return <div className="object-card">
-    {image === articleCover ? <div className="object-cover object-cover--article" aria-hidden="true"/> :
-      <img className={`object-cover${portrait ? ' object-cover--portrait' : ''}`} src={asset(image)} alt="" loading="lazy"/>}
+    <img className={`object-cover${portrait ? ' object-cover--portrait' : ''}`} src={asset(image)} alt="" loading="lazy"/>
     <span className="object-copy">
       {typeLabel && <span className="eyebrow">{typeLabel}</span>}
       <strong>{title}</strong>
@@ -209,6 +264,40 @@ function ArticleView({ item, direction, breadcrumbs }: {
   item: Item; direction: string; breadcrumbs: ReactNode;
 }) {
   const article = articles[item.id];
+  const articleBody = useRef<HTMLDivElement>(null);
+  const [activeChapter, setActiveChapter] = useState(0);
+
+  useEffect(() => {
+    const chapters = Array.from(articleBody.current?.children ?? []);
+    const firstChapter = chapters[0];
+    if (!firstChapter) return;
+
+    let activationLine = 0;
+    function updateActiveChapter() {
+      let index = 0;
+      for (const [chapterIndex, chapter] of chapters.entries()) {
+        if (chapter.getBoundingClientRect().top > activationLine) break;
+        index = chapterIndex;
+      }
+      setActiveChapter(index);
+    }
+
+    function updateActivationLine() {
+      const scrollPadding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+      const scrollMargin = parseFloat(getComputedStyle(firstChapter).scrollMarginTop) || 0;
+      activationLine = scrollPadding + scrollMargin + 2;
+      updateActiveChapter();
+    }
+
+    updateActivationLine();
+    window.addEventListener('scroll', updateActiveChapter, { passive: true });
+    window.addEventListener('resize', updateActivationLine);
+    return () => {
+      window.removeEventListener('scroll', updateActiveChapter);
+      window.removeEventListener('resize', updateActivationLine);
+    };
+  }, [article]);
+
   if (!article) return null;
 
   function renderBlock(block: ArticleBlock) {
@@ -235,17 +324,17 @@ function ArticleView({ item, direction, breadcrumbs }: {
         <h1>{item.title}</h1>
         <p>{item.subtitle}</p>
       </header>
-      <div className="article-cover" aria-hidden="true"/>
+      <div className="article-cover"><MusicCover item={item}/></div>
     </div>
-    {article.chapters.length > 0 && <nav className="article-toc" aria-label="Оглавление">
-      <strong>Оглавление</strong>
-      <ul role="list">{article.chapters.map((chapter, i) => <li key={chapter.title}><button type="button" onClick={() => {
+    {article.chapters.length > 0 && <nav className="article-toc" aria-labelledby="article-toc-heading">
+      <strong id="article-toc-heading">Что внутри</strong>
+      <ul role="list">{article.chapters.map((chapter, i) => <li key={chapter.title}><button type="button" aria-current={activeChapter === i ? 'location' : undefined} onClick={() => {
         const target = document.getElementById('chapter-' + i);
         target?.focus({ preventScroll: true });
         target?.scrollIntoView({ block: 'start' });
       }}>{chapter.title}</button></li>)}</ul>
     </nav>}
-    <div className="article-body">
+    <div className="article-body" ref={articleBody}>
       {article.chapters.map((chapter, i) => <section key={chapter.title} className="article-chapter" id={'chapter-' + i} tabIndex={-1}>
         <h2>{chapter.title}</h2>
         {chapter.blocks.map((block, index) => <Fragment key={index}>{renderBlock(block)}</Fragment>)}
@@ -254,21 +343,25 @@ function ArticleView({ item, direction, breadcrumbs }: {
   </article>;
 }
 
-function CoverFeature({ list, direction }: { list: Item[]; direction: string }) {
+function CoverFeature({ list, totalArticles, direction }: { list: Item[]; totalArticles: number; direction: string }) {
   const [story, ...otherStories] = list;
   if (!story) return null;
+  const more = list.length >= articleSection.desktopColumns && totalArticles > list.length
+    ? { href: href('catalog', 'article', direction), label: catalogLabels.article }
+    : undefined;
   return <ShelfSection title="Выбор" script="редакции" className="editor-section"
-    more={{ href: href('catalog', 'article', direction), label: catalogLabels.article }}>
-    <div className="music-shelf editorial-shelf">
+    more={more}>
+    <div className="music-shelf editorial-shelf" data-desktop-columns={articleSection.desktopColumns}>
       {list.map((item) => <MediaCard key={item.id} item={item} direction={direction} showMeta={false}/>)}
     </div>
     <div className="feature-grid">
       <a className="feature-main" href={href('detail', story.id, direction)}>
+        <div className="feature-main__cover"><MusicCover item={story} loading="lazy"/></div>
         <div className="feature-copy"><h3>{story.title}</h3><p>{story.description}</p></div>
       </a>
       {otherStories.length > 0 && <div className="feature-side">
         {otherStories.map((item) => <a key={item.id} href={href('detail', item.id, direction)}>
-          <div className="feature-side__cover" aria-hidden="true"/>
+          <div className="feature-side__cover"><MusicCover item={item} loading="lazy"/></div>
           <span><strong>{item.title}</strong><span className="feature-summary">{item.description}</span></span>
         </a>)}
       </div>}
@@ -276,19 +369,39 @@ function CoverFeature({ list, direction }: { list: Item[]; direction: string }) 
   </ShelfSection>;
 }
 
-export function Music({ route, recordings }: {
+// Match the column breakpoints of .episode-grid in style.css.
+function getEpisodePreviewLimit() {
+  if (window.matchMedia('(min-width: 1120px)').matches) return 5;
+  if (window.matchMedia('(min-width: 768px)').matches) return 3;
+  return 2;
+}
+
+export function Music({ route, recordings, filterDirections }: {
   route: MusicRoute;
   recordings: RecordingState;
+  filterDirections: boolean;
 }) {
   const [format, setFormat] = useState('');
   const [guest, setGuest] = useState('');
+  const [episodePreviewLimit, setEpisodePreviewLimit] = useState(getEpisodePreviewLimit);
+  useEffect(() => {
+    const update = () => setEpisodePreviewLimit(getEpisodePreviewLimit());
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
   const direction = directions.find((entry) => entry.id === route.direction);
   const directionId = direction?.id ?? '';
   const item = byId(route.id);
   const section = sections.find((entry) => entry.id === route.id);
+  const programsCatalog = route.page === 'catalog' && section?.id === 'program';
   const all = direction ? items.filter((entry) => entry.direction === direction.title || entry.extraDirections?.includes(direction.title)) : items;
-  const overview = all.filter((entry) => !featuredIds[entry.type] || featuredIds[entry.type].includes(entry.id));
-  const showOverview = route.page === 'home' || (route.page === 'direction' && direction !== undefined);
+  const overview = direction ? all : all.filter((entry) => !featuredIds[entry.type] || featuredIds[entry.type].includes(entry.id));
+  const showOverview = route.page === 'home' || (isMusicOverview(route) && direction !== undefined);
+  const directionPage = route.page === 'direction';
+  const filterOverview = filterDirections && showOverview;
+  const editorPicks = pick(editorialIds).filter((entry) => all.includes(entry));
+  const allArticles = all.filter((entry) => entry.type === 'article');
+  const otherArticles = direction ? allArticles.filter((entry) => !editorPicks.includes(entry)) : [];
 
   const audio = (clip: Clip) => <ClipButton clip={clip} current={recordings.current} playing={recordings.playing} play={recordings.play}/>;
   const filterRecords = all.filter((entry) => entry.type === 'episode');
@@ -301,41 +414,46 @@ export function Music({ route, recordings }: {
   const episodeProgram = episodeProgramId ? byId(episodeProgramId) : undefined;
   const guestProfile = item?.guest ? items.find((entry) => entry.type === 'artist' && entry.title === item.guest) : undefined;
   const articlePage = route.page === 'detail' && item?.type === 'article';
-  const breadcrumbs = route.page !== 'home' && <nav className="breadcrumbs" aria-label="Хлебные крошки">
-    <a href={href()}>Музыка</a><span aria-hidden="true">/</span>
-    {direction && (route.page === 'catalog' || articlePage) && <><a href={href('direction', directionId)}>{direction.title}</a><span aria-hidden="true">/</span></>}
-    <span aria-current="page">{route.page === 'direction' ? direction?.title : route.page === 'catalog' ? [section?.title, section?.script].filter(Boolean).join(' ') : (item && typeNames[item.type])}</span>
+  const breadcrumbs = !isMusicOverview(route) && !programsCatalog && <nav className="breadcrumbs" aria-label="Хлебные крошки">
+    <a href={route.fromPrograms ? programsHref : href()}>{route.fromPrograms ? 'Программы' : 'Музыка'}</a><span aria-hidden="true">/</span>
+    {direction && <><a href={href('direction', directionId)}>{direction.title}</a><span aria-hidden="true">/</span></>}
+    <span aria-current="page">{route.page === 'catalog' ? [section?.title, section?.script].filter(Boolean).join(' ') : item && (route.fromPrograms ? item.title : typeNames[item.type])}</span>
   </nav>;
-  const overviewTitle = direction?.title ?? 'Музыкальный мир РИФ FM';
-  const scriptStart = direction ? overviewTitle.lastIndexOf(' ') + 1 : overviewTitle.indexOf('РИФ FM');
+  const rubricHeading = directionPage ? direction : undefined;
+  const overviewTitle = rubricHeading?.title ?? 'Музыкальный мир РИФ FM';
+  const scriptStart = rubricHeading ? overviewTitle.lastIndexOf(' ') + 1 : overviewTitle.indexOf('РИФ FM');
 
   return (
-    <main className={`container music-main music-main--${route.page}`} id="music-content" tabIndex={-1}>
+    <main className={`container music-main music-main--${route.page}${programsCatalog ? ' music-main--programs' : ''}${filterOverview ? ' music-main--with-filters' : ''}`} id="music-content" tabIndex={-1}>
       {!articlePage && breadcrumbs}
 
       {showOverview && <>
+        {filterOverview && <Directions selected={directionId}/>}
+        {directionPage && !filterOverview && <a className="button button--tertiary music-back" href={href()}><Icon name="chevron-down"/>Вся музыка</a>}
         <header className="music-title">
           <Heading first={overviewTitle.slice(0, scriptStart).trimEnd()} script={overviewTitle.slice(scriptStart)} level={1}/>
-          <p>{direction?.description ?? 'Здесь мы собрали альбомы, истории об исполнителях и записи наших передач. Можно начать с прослушивания любимой песни, а можно найти что-то, чего раньше не слышали.'}</p>
+          <p>{rubricHeading?.description ?? 'Здесь мы собрали альбомы, истории об исполнителях и записи наших передач. Можно начать с прослушивания любимой песни, а можно найти что-то, чего раньше не слышали.'}</p>
         </header>
-        <Directions active={directionId}/>
-        <CoverFeature list={pick(editorialIds).filter((entry) => all.includes(entry))} direction={directionId}/>
-        {sections.filter((group) => group.id !== 'article').map((group) => <Shelf key={group.id} title={group.title} script={group.script}
-          list={overview.filter((entry) => entry.type === group.id)}
+        {!filterOverview && !directionPage && <Directions/>}
+        <CoverFeature list={editorPicks} totalArticles={allArticles.length} direction={directionId}/>
+        {sections.map((group) => <Shelf key={group.id} title={group.title} script={group.script}
+          list={group.id === 'article' ? otherArticles : overview.filter((entry) => entry.type === group.id)}
           direction={directionId}
-          more={hasCatalog(group.id) ? { href: href('catalog', group.id, directionId), label: catalogLabels[group.id] } : undefined}
-          desktopColumns={group.desktopColumns}/>)}
+          more={group.id !== 'article' && hasCatalog(group.id) ? { href: href('catalog', group.id, directionId), label: catalogLabels[group.id] } : undefined}
+          previewLimit={group.id === 'episode' ? episodePreviewLimit : undefined}
+          trimPreview={!direction}/>)}
+        {directionPage && !filterOverview && <OtherDirections active={directionId}/>}
       </>}
 
       {route.page === 'catalog' && section && <>
-        <header className="music-title"><Heading first={section.title} script={section.script} level={1} size={2}/></header>
+        <header className="music-title"><Heading first={programsCatalog ? 'Наши' : section.title} script={section.script} level={1} size={programsCatalog ? 1 : 2}/></header>
         {section.id === 'episode' && <div className="playlist-filters catalog-filters" role="group" aria-label="Фильтры записей эфиров">
           <PlaylistFilter id="recordings-format" label="Формат" value={format} options={formatOptions} onChange={setFormat}/>
           <PlaylistFilter id="recordings-guest" label="Гость" value={guest}
             options={[{ id: '', label: 'Все гости' }, ...guests.map(name => ({ id: name, label: name }))]} onChange={setGuest}/>
         </div>}
-        {catalog.length ? <div className="catalog-grid" data-desktop-columns={section.desktopColumns}>
-          {catalog.map((entry) => <MediaCard key={entry.id} item={entry} direction={directionId}/>)}
+        {catalog.length ? <div className={section.id === 'episode' ? 'catalog-grid episode-grid' : 'catalog-grid music-shelf'} data-desktop-columns={section.desktopColumns}>
+          {catalog.map((entry) => <MediaCard key={entry.id} item={entry} direction={directionId} fromPrograms={programsCatalog}/>)}
         </div> : <div className="empty">
           <h2>Материалы не найдены</h2>
           {section.id === 'episode' && (format || guest) && <Button variant="secondary" onClick={() => { setFormat(''); setGuest(''); }}>Сбросить фильтры</Button>}
@@ -345,13 +463,17 @@ export function Music({ route, recordings }: {
       {route.page === 'detail' && item && <>
         {item.type === 'article' ? <ArticleView key={item.id} item={item} direction={directionId} breadcrumbs={breadcrumbs}/> : <>
           <header className={'detail-hero detail-hero--' + item.type}>
-            <div className="detail-art"><MusicCover item={item}/>{item.type === 'program' && <span aria-hidden="true" className="program-title">{item.title}</span>}</div>
+            <div className="detail-art">
+              <MusicCover item={item}/>
+            </div>
             <div className="detail-copy">
               <div className="detail-heading">
                 <h1>{item.title}</h1>
                 <p className="detail-subtitle">{programme?.schedule ?? episodeProgram?.title ?? item.subtitle}</p>
               </div>
-              <p>{item.description}</p>
+              <div className="detail-description">
+                {item.description.split('\n\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+              </div>
               {programme?.host && <div className="hosts">
                 <div className="hosts__avatars" aria-hidden="true"><Avatar src={asset('host.png')} name={programme.host}/></div>
                 <div className="hosts__names"><span>Ведущий</span><strong>{programme.host}</strong></div>
@@ -372,7 +494,7 @@ export function Music({ route, recordings }: {
           </section>}
         </>}
         {programme ? <>
-          <EpisodeList title="Последние выпуски" episodes={pick(programme.episodes)} cover={item.image} direction={directionId}/>
+          <EpisodeList title="Последние выпуски" episodes={pick(programme.episodes)} direction={directionId} compact/>
           <Shelf title="Гости программы" list={pick(programme.guests)} direction={directionId}/>
           <Shelf title="Статьи, новости и подборки" list={pick(programme.reads)} direction={directionId}/>
         </> : isEpisode ? <EpisodeRelatedSections item={item} program={episodeProgram} guest={guestProfile} direction={directionId}/> : item.type === 'artist' ? <>

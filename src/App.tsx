@@ -7,9 +7,8 @@ import { DesktopPlayer, NowPlaying, PlayControl, RadioProvider, useRadio, VideoO
 import { PlaylistOverlay } from './components/playlist';
 import { MobileBar } from './components/mobile-bar';
 import { WriteToAir } from './components/write-to-air';
-import { PrototypeVersionProvider } from './prototype-version';
 import { Music } from './music/music';
-import { musicHref, readMusicRoute } from './music/navigation';
+import { isMusicOverview, musicHref, programsHref, readMusicRoute, stationSection } from './music/navigation';
 import { RecordingPlayer, useRecordingPlayer } from './music/recordings';
 
 const programs = [
@@ -62,7 +61,11 @@ function Hero({ onOpenPlaylist, playlistOpen }: { onOpenPlaylist: () => void; pl
 function Page() {
   const [hash, setHash] = useState(() => location.hash);
   const previousHash = useRef(hash);
+  const musicPositions = useRef(new Map<string, { destination: string; top: number }>());
   const musicRoute = readMusicRoute(hash);
+  const filterDirections = new URLSearchParams(location.search).get('rubrics') === 'chips';
+  const filterOverview = filterDirections && isMusicOverview(musicRoute);
+  const activeSection = stationSection(musicRoute);
   const { pause: pauseLive } = useRadio();
   const recordings = useRecordingPlayer(pauseLive);
   const { clear: clearRecording } = recordings;
@@ -82,16 +85,33 @@ function Page() {
     const from = previousHash.current;
     if (from === hash) return;
     previousHash.current = hash;
-    if (readMusicRoute(hash)) {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      document.getElementById('music-content')?.focus({ preventScroll: true });
-    } else if (readMusicRoute(from)) {
+    const fromRoute = readMusicRoute(from);
+    if (musicRoute) {
+      const position = musicPositions.current.get(hash);
+      const returning = position?.destination === from;
+      const main = document.getElementById('music-content');
+      if (filterOverview && isMusicOverview(fromRoute) && main?.querySelector('.directions--switcher')?.contains(document.activeElement)) return;
+      const clicked = returning && [...(main?.querySelectorAll('a') ?? [])]
+        .find((link) => link.hash === from && link.getClientRects().length > 0);
+      window.scrollTo({ top: returning ? position.top : 0, behavior: 'instant' });
+      (clicked || main)?.focus({ preventScroll: true });
+    } else if (fromRoute) {
       clearRecording();
       const section = document.getElementById(hash.slice(1));
       if (section) section.scrollIntoView({ behavior: 'instant' });
       else window.scrollTo({ top: 0, behavior: 'instant' });
     }
-  }, [hash, clearRecording]);
+  }, [hash, clearRecording, filterOverview, musicRoute]);
+
+  const rememberMusicPosition = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+    const link = event.target instanceof Element && event.target.closest<HTMLAnchorElement>('a[href^="#"]');
+    if (!link || link.hash === hash) return;
+    const destination = readMusicRoute(link.hash);
+    if (destination?.page === 'catalog' || destination?.page === 'detail') {
+      musicPositions.current.set(hash, { destination: link.hash, top: window.scrollY });
+    }
+  };
 
   const pending = (title: string) => setDetails({ title, content: <p>Этот раздел не входит в прототип главной страницы.</p> });
   const missingSocial = (name: string) => setDetails({ title: `Риф FM в ${name}`, content: <p>Ссылка на официальный канал пока не подключена.</p> });
@@ -107,21 +127,21 @@ function Page() {
     content?.focus({ preventScroll: true });
     content?.scrollIntoView();
   } : undefined}>К содержимому</a>
-  <Header musicHref={musicHref()} musicActive={!!musicRoute} writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} />
+  <Header musicHref={musicHref()} programsHref={programsHref} activeSection={activeSection} writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} />
   {musicRoute ? <>
-    <div className="music-page">
-      <Music key={hash} route={musicRoute} recordings={recordings} />
+    <div className="music-page ocean-gradient" onClickCapture={rememberMusicPosition}>
+      <Music key={filterOverview ? musicHref() : hash} route={musicRoute} recordings={recordings} filterDirections={filterDirections} />
       {footer}
     </div>
     <Seabed />
   </> : <main><Hero onOpenPlaylist={() => setPlaylistOpen(true)} playlistOpen={playlistOpen} />
-    <section className="section upcoming" id="schedule" data-figma-component="639:18786"><div className="container"><div className="section__header"><Heading first="Дальше в" script="эфире" /><Button variant="tertiary" iconRight="arrow" className="section__link" onClick={schedule}>Всё расписание</Button></div><div className="program-grid">{programs.map(program => <button className="program-card" key={program.cover} onClick={() => setDetails({ title: program.title, content: <><p className="detail-time">16:00 – 17:30</p>{program.cover === 'story' ? <><Hosts /><p>Как появилась песня, кто спел её первым и почему она до сих пор трогает.</p></> : <p>Слушайте программу в эфире Риф FM.</p>}<Button icon="play" onClick={() => { setDetails(null); document.getElementById('air')?.scrollIntoView({ behavior: 'smooth' }); }}>К эфиру</Button></> })}><img src={asset(`cover-${program.cover}.png`)} alt="" width="324" height="324" loading="lazy" /><span className="time-chip">16:00 – 17:30</span><h3>{program.title}</h3></button>)}</div><Button variant="secondary" iconRight="arrow" className="section__mobile-action" onClick={schedule}>Всё расписание</Button></div></section>
-    <div className="ocean-gradient"><section className="section about" id="about" data-figma-component="639:18787"><div className="container about__grid"><div className="about__left"><Heading first="О радиостанции" script="Риф FM" /><img className="about__art" src={asset('about-art.png')} width="920" height="520" alt="Музыкальный маяк среди морских волн" loading="lazy" /></div><div className="about__copy">{about.map(p => <p key={p}>{p}</p>)}<Button iconRight="arrow" onClick={() => setDetails({ title: 'О радиостанции Риф FM', content: <>{about.map(p => <p key={p}>{p}</p>)}</> })}>Подробнее</Button></div><img className="about__birds" src={asset('seagulls.png')} alt="" loading="lazy" /></div></section>
+    <section className="section upcoming" id="schedule" data-figma-component="639:18786"><div className="container"><div className="section__header"><Heading first="Дальше в" script="эфире" /><Button variant="tertiary" iconRight="chevron-right" className="section__link" onClick={schedule}>Всё расписание</Button></div><div className="program-grid">{programs.map(program => <button className="program-card" key={program.cover} onClick={() => setDetails({ title: program.title, content: <><p className="detail-time">16:00 – 17:30</p>{program.cover === 'story' ? <><Hosts /><p>Как появилась песня, кто спел её первым и почему она до сих пор трогает.</p></> : <p>Слушайте программу в эфире Риф FM.</p>}<Button icon="play" onClick={() => { setDetails(null); document.getElementById('air')?.scrollIntoView({ behavior: 'smooth' }); }}>К эфиру</Button></> })}><img src={asset(`cover-${program.cover}.png`)} alt="" width="324" height="324" loading="lazy" /><span className="time-chip">16:00 – 17:30</span><h3>{program.title}</h3></button>)}</div><Button variant="secondary" iconRight="chevron-right" className="section__mobile-action" onClick={schedule}>Всё расписание</Button></div></section>
+    <div className="ocean-gradient"><section className="section about" id="about" data-figma-component="639:18787"><div className="container about__grid"><div className="about__left"><Heading first="О радиостанции" script="Риф FM" /><img className="about__art" src={asset('about-art.png')} width="920" height="520" alt="Музыкальный маяк среди морских волн" loading="lazy" /></div><div className="about__copy">{about.map(p => <p key={p}>{p}</p>)}<Button iconRight="chevron-right" onClick={() => setDetails({ title: 'О радиостанции Риф FM', content: <>{about.map(p => <p key={p}>{p}</p>)}</> })}>Подробнее</Button></div><img className="about__birds" src={asset('seagulls.png')} alt="" loading="lazy" /></div></section>
     <section className="section contacts" id="contacts" data-figma-component="639:18788">
       <div className="container">
         <div className="section__header">
           <Heading first="Наши" script="контакты" />
-          <Button variant="tertiary" iconRight="arrow" className="section__link" onClick={() => setDetails({
+          <Button variant="tertiary" iconRight="chevron-right" className="section__link" onClick={() => setDetails({
             title: 'Контакты Риф FM',
             content: <>
               <p>Вопросы о программах и ведущих: <a href={`mailto:${editorialEmail}`}>{editorialEmail}</a></p>
@@ -140,7 +160,7 @@ function Page() {
               : <Socials links={socialLinks} onMissing={missingSocial} />}
           </article>)}
         </div>
-        <Button variant="secondary" iconRight="arrow" className="section__mobile-action" onClick={() => setDetails({
+        <Button variant="secondary" iconRight="chevron-right" className="section__mobile-action" onClick={() => setDetails({
           title: 'Контакты Риф FM',
           content: <>
             <p><a href={`mailto:${editorialEmail}`}>{editorialEmail}</a> — редакция</p>
@@ -154,11 +174,18 @@ function Page() {
   </main>}
   {recordings.audio}
   {recordPlayer ? <div className="music-player-wrap music-player-wrap--desktop">{recordPlayer}</div> : <DesktopPlayer onOpenPlaylist={() => setPlaylistOpen(true)} playlistOpen={playlistOpen} />}
-  <MobileBar musicHref={musicHref()} musicActive={!!musicRoute} miniPlayer={recordPlayer} moreOpen={moreOpen} onMore={() => setMoreOpen(true)} writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} onOpenPlaylist={() => setPlaylistOpen(true)} playlistOpen={playlistOpen} />
-  {moreOpen && <Dialog label="Ещё" onClose={() => setMoreOpen(false)} className="more-sheet"><div className="sheet-handle" /><div className="details__header"><h2>Ещё</h2><Button variant="tertiary" icon="chevron-down" iconOnly aria-label="Закрыть меню" onClick={() => setMoreOpen(false)} /></div><a href="#about" onClick={() => setMoreOpen(false)}>О радиостанции</a><a href="#contacts" onClick={() => setMoreOpen(false)}>Контакты</a>{['Рекламодателям','Партнёрам','Документы'].map(label => <button key={label} onClick={() => { setMoreOpen(false); pending(label); }}>{label}<Icon name="arrow" /></button>)}</Dialog>}
+  <MobileBar musicHref={musicHref()} activeSection={activeSection} miniPlayer={recordPlayer} moreOpen={moreOpen} onMore={() => setMoreOpen(true)} writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} onOpenPlaylist={() => setPlaylistOpen(true)} playlistOpen={playlistOpen} />
+  {moreOpen && <Dialog label="Ещё" onClose={() => setMoreOpen(false)} className="more-sheet">
+    <div className="sheet-handle" />
+    <div className="details__header"><h2>Ещё</h2><Button variant="tertiary" icon="chevron-down" iconOnly aria-label="Закрыть меню" onClick={() => setMoreOpen(false)} /></div>
+    <a href={programsHref} aria-current={activeSection === 'programs' ? 'page' : undefined} onClick={() => setMoreOpen(false)}>Программы<Icon name="chevron-right" /></a>
+    <a href="#about" onClick={() => setMoreOpen(false)}>О радиостанции</a>
+    <a href="#contacts" onClick={() => setMoreOpen(false)}>Контакты</a>
+    {['Рекламодателям','Партнёрам','Документы'].map(label => <button key={label} onClick={() => { setMoreOpen(false); pending(label); }}>{label}<Icon name="chevron-right" /></button>)}
+  </Dialog>}
   {details && <Dialog label={details.title} onClose={() => setDetails(null)} className="details"><div className="details__header"><h2>{details.title}</h2><Button variant="secondary" icon="chevron-down" iconOnly aria-label="Закрыть" onClick={() => setDetails(null)} /></div><div className="details__body">{details.content}</div></Dialog>}
   {writeToAirOpen && <WriteToAir onClose={() => setWriteToAirOpen(false)} />}
   <VideoOverlay />{playlistOpen && <PlaylistOverlay onClose={() => setPlaylistOpen(false)} />}</>;
 }
 
-export function App() { return <PrototypeVersionProvider><RadioProvider><Page /></RadioProvider></PrototypeVersionProvider>; }
+export function App() { return <RadioProvider><Page /></RadioProvider>; }

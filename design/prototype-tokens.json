@@ -1,22 +1,7 @@
 {
-  "description": "User-requested prototype roles and version overrides; the Figma variable export remains unchanged.",
+  "description": "Additional prototype color roles used by the interface.",
   "tokens": [
     { "name": "Text/Accent Secondary", "cssVariable": "--text-accent-secondary", "value": "var(--rif-3b8dcf)" },
     { "name": "Icon/Accent Secondary", "cssVariable": "--icon-accent-secondary", "value": "var(--rif-3b8dcf)" }
-  ],
-  "versions": {
-    "1": {},
-    "2": {
-      "--text-secondary": "#547fa2",
-      "--icons-secondary": "#547fa2",
-      "--text-accent-secondary": "#1980d4",
-      "--icon-accent-secondary": "#1980d4",
-      "--controls-secondary-background": "#e3f5fc",
-      "--controls-secondary-hover": "#d2eaf6"
-    },
-    "3": {
-      "--text-secondary": "#068fd3",
-      "--icons-secondary": "#068fd3"
-    }
-  }
+  ]
 }

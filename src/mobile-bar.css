@@ -59,8 +59,8 @@
   .tab-bar__icon { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; color: var(--icon-accent-secondary); }
   .tab-bar__icon > .icon--tab-broadcast { width: 16.7957px; height: 16.8px; }
   .tab-bar__icon > .icon--tab-calendar { width: 16.1997px; height: 16.2px; }
-  .tab-bar__item[aria-current] { color: var(--text-accent); }
-  .tab-bar__item[aria-current] .tab-bar__icon { color: var(--icons-accent); }
+  .tab-bar__item:is([aria-current], [data-active]) { color: var(--text-accent); }
+  .tab-bar__item:is([aria-current], [data-active]) .tab-bar__icon { color: var(--icons-accent); }
 
   .mini-player {
     display: flex;
