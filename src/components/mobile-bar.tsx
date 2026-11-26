@@ -23,7 +23,7 @@ function TabBar({ moreOpen, onMore, writeToAirOpen, onWriteToAir, musicHref, act
     <button type="button" className="tab-bar__item" aria-label="Написать в эфир" aria-haspopup="dialog" aria-expanded={writeToAirOpen} onClick={onWriteToAir}>
       <span className="tab-bar__icon"><Icon name="chat-bubble" /></span><span>Написать</span>
     </button>
-    <button type="button" className="tab-bar__item" data-active={activeSection === 'programs' || undefined} aria-haspopup="dialog" aria-expanded={moreOpen} onClick={onMore} data-figma-component="1030:316627"><span className="tab-bar__icon"><Icon name="tab-more" /></span><span>Ещё</span></button>
+    <button type="button" className="tab-bar__item" data-active={activeSection === 'programs' || activeSection === 'guests' || undefined} aria-haspopup="dialog" aria-expanded={moreOpen} onClick={onMore} data-figma-component="1030:316627"><span className="tab-bar__icon"><Icon name="tab-more" /></span><span>Ещё</span></button>
   </nav>;
 }
 

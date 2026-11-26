@@ -15,10 +15,11 @@ type HeaderProps = {
   stationUrl?: string;
   musicHref?: string;
   programsHref?: string;
+  guestsHref?: string;
   activeSection?: StationSection;
 };
 
-export function Header({ writeToAirOpen, onWriteToAir, stationUrl = '', musicHref, programsHref, activeSection = 'air' }: HeaderProps) {
+export function Header({ writeToAirOpen, onWriteToAir, stationUrl = '', musicHref, programsHref, guestsHref, activeSection = 'air' }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const homeHref = `${stationUrl}#air`;
 
@@ -36,6 +37,7 @@ export function Header({ writeToAirOpen, onWriteToAir, stationUrl = '', musicHre
         <a href={homeHref} aria-current={activeSection === 'air' ? 'page' : undefined}>Эфир</a>
         {musicHref && <a href={musicHref} aria-current={activeSection === 'music' ? 'page' : undefined}>Музыка</a>}
         {programsHref && <a href={programsHref} aria-current={activeSection === 'programs' ? 'page' : undefined}>Программы</a>}
+        {guestsHref && <a href={guestsHref} aria-current={activeSection === 'guests' ? 'page' : undefined}>Гости</a>}
         {stationLinks.map(({ id, title }) => <a key={id} href={`${stationUrl}#${id}`}>{title}</a>)}
       </nav>
       <div className="header__slot">

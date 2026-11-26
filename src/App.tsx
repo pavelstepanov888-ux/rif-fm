@@ -8,7 +8,7 @@ import { PlaylistOverlay } from './components/playlist';
 import { MobileBar } from './components/mobile-bar';
 import { WriteToAir } from './components/write-to-air';
 import { Music } from './music/music';
-import { isMusicOverview, musicHref, programsHref, readMusicRoute, stationSection } from './music/navigation';
+import { guestsHref, isGuestCatalog, isMusicOverview, musicHref, programsHref, readMusicRoute, stationSection } from './music/navigation';
 import { RecordingPlayer, useRecordingPlayer } from './music/recordings';
 
 const programs = [
@@ -63,8 +63,9 @@ function Page() {
   const previousHash = useRef(hash);
   const musicPositions = useRef(new Map<string, { destination: string; top: number }>());
   const musicRoute = readMusicRoute(hash);
-  const filterDirections = new URLSearchParams(location.search).get('rubrics') === 'chips';
-  const filterOverview = filterDirections && isMusicOverview(musicRoute);
+  const filtersBelowTitle = new URLSearchParams(location.search).get('filters') === 'below';
+  const musicOverview = isMusicOverview(musicRoute);
+  const guestCatalog = isGuestCatalog(musicRoute);
   const activeSection = stationSection(musicRoute);
   const { pause: pauseLive } = useRadio();
   const recordings = useRecordingPlayer(pauseLive);
@@ -90,7 +91,8 @@ function Page() {
       const position = musicPositions.current.get(hash);
       const returning = position?.destination === from;
       const main = document.getElementById('music-content');
-      if (filterOverview && isMusicOverview(fromRoute) && main?.querySelector('.directions--switcher')?.contains(document.activeElement)) return;
+      const switchingChips = (musicOverview && isMusicOverview(fromRoute)) || (guestCatalog && isGuestCatalog(fromRoute));
+      if (switchingChips && main?.querySelector('.directions--switcher')?.contains(document.activeElement)) return;
       const clicked = returning && [...(main?.querySelectorAll('a') ?? [])]
         .find((link) => link.hash === from && link.getClientRects().length > 0);
       window.scrollTo({ top: returning ? position.top : 0, behavior: 'instant' });
@@ -101,13 +103,14 @@ function Page() {
       if (section) section.scrollIntoView({ behavior: 'instant' });
       else window.scrollTo({ top: 0, behavior: 'instant' });
     }
-  }, [hash, clearRecording, filterOverview, musicRoute]);
+  }, [hash, clearRecording, guestCatalog, musicOverview, musicRoute]);
 
   const rememberMusicPosition = (event: MouseEvent<HTMLDivElement>) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
     const link = event.target instanceof Element && event.target.closest<HTMLAnchorElement>('a[href^="#"]');
     if (!link || link.hash === hash) return;
     const destination = readMusicRoute(link.hash);
+    if (guestCatalog && isGuestCatalog(destination)) return;
     if (destination?.page === 'catalog' || destination?.page === 'detail') {
       musicPositions.current.set(hash, { destination: link.hash, top: window.scrollY });
     }
@@ -127,10 +130,10 @@ function Page() {
     content?.focus({ preventScroll: true });
     content?.scrollIntoView();
   } : undefined}>К содержимому</a>
-  <Header musicHref={musicHref()} programsHref={programsHref} activeSection={activeSection} writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} />
+  <Header musicHref={musicHref()} programsHref={programsHref} guestsHref={guestsHref} activeSection={activeSection} writeToAirOpen={writeToAirOpen} onWriteToAir={openWriteToAir} />
   {musicRoute ? <>
     <div className="music-page ocean-gradient" onClickCapture={rememberMusicPosition}>
-      <Music key={filterOverview ? musicHref() : hash} route={musicRoute} recordings={recordings} filterDirections={filterDirections} />
+      <Music key={musicOverview ? musicHref() : guestCatalog ? guestsHref : hash} route={musicRoute} recordings={recordings} filtersBelowTitle={filtersBelowTitle} />
       {footer}
     </div>
     <Seabed />
@@ -179,6 +182,7 @@ function Page() {
     <div className="sheet-handle" />
     <div className="details__header"><h2>Ещё</h2><Button variant="tertiary" icon="chevron-down" iconOnly aria-label="Закрыть меню" onClick={() => setMoreOpen(false)} /></div>
     <a href={programsHref} aria-current={activeSection === 'programs' ? 'page' : undefined} onClick={() => setMoreOpen(false)}>Программы<Icon name="chevron-right" /></a>
+    <a href={guestsHref} aria-current={activeSection === 'guests' ? 'page' : undefined} onClick={() => setMoreOpen(false)}>Гости<Icon name="chevron-right" /></a>
     <a href="#about" onClick={() => setMoreOpen(false)}>О радиостанции</a>
     <a href="#contacts" onClick={() => setMoreOpen(false)}>Контакты</a>
     {['Рекламодателям','Партнёрам','Документы'].map(label => <button key={label} onClick={() => { setMoreOpen(false); pending(label); }}>{label}<Icon name="chevron-right" /></button>)}

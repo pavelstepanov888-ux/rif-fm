@@ -2,18 +2,19 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Avatar, Button, Dialog, Heading, Icon } from '../components/ui';
 import { PlaylistFilter } from '../components/playlist-filter';
 import { asset } from '../assets';
-import { allMusicDirection, articleSection, byId, directions, episodePrograms, featuredIds, items, pick, programs, sections, tracks, type Item } from './data';
+import { allMusicDirection, articleSection, byId, directions, episodePrograms, featuredIds, guestSection, items, pick, programs, sections, tracks, type Item } from './data';
 import { articleReferences, articles, searchMusic, type ArticleBlock, type ArticleLink } from './articles';
-import { catalogLabels, hasCatalog, isMusicOverview, musicHref as href, programDetailHref, programsHref, type MusicRoute } from './navigation';
+import { catalogLabels, guestCatalogHref, hasCatalog, isGuestCatalog, isMusicOverview, musicHref as href, programsHref, stationProfileHref, type MusicRoute } from './navigation';
 import { type Clip, type RecordingState } from './recordings';
 
-const typeNames: Record<string, string> = Object.fromEntries(sections.map(({ id, label }) => [id, label]));
+const typeNames: Record<string, string> = Object.fromEntries([...sections, guestSection].map(({ id, label }) => [id, label]));
 const editorialIds = ['studio-story', 'sade-story', 'words-story'];
 const relatedGroups = [
   { type: 'episode', title: 'Записи эфиров' },
   { type: 'article', title: 'Читайте также' },
   { type: 'program', title: 'Программы' },
-  { type: 'artist', title: 'Артисты и гости' },
+  { type: 'artist', title: 'Артисты' },
+  { type: 'guest', title: 'Гости' },
   { type: 'release', title: 'Релизы' },
 ];
 const formatOptions = [
@@ -21,6 +22,15 @@ const formatOptions = [
   { id: 'audio', label: 'Аудио' },
   { id: 'video', label: 'Видео' },
 ];
+const guestProfiles = items.filter((item) => item.type === 'guest');
+const guestSpecialties = [...new Set(guestProfiles.map((item) => item.subtitle))];
+const guestSpecialtyLabels: Record<string, string> = {
+  'Музыкальный журналист': 'Журналисты',
+  'Художница': 'Художники',
+  'Певец': 'Певцы',
+  'Поэтесса': 'Поэты',
+  'Звукорежиссёр': 'Звукорежиссёры',
+};
 
 const broadcastDate = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Moscow' });
 const formatBroadcastDate = (date: string) => broadcastDate.format(new Date(date)).replace(/\s+г\.(?=\s|$)/u, '');
@@ -33,7 +43,7 @@ const photos = [
 function cardMeta(item: Item) {
   if (item.type === 'episode') return item.format === 'video' ? 'Видео' : 'Аудио';
   if (item.type === 'article') return item.id.endsWith('-news') ? 'Новости' : item.id === 'studio-story' ? 'Фотоистория' : 'Статья';
-  return item.direction;
+  return item.direction ?? '';
 }
 
 function MusicCover({ item, loading }: { item: Item; loading?: 'lazy' }) {
@@ -44,8 +54,8 @@ function MusicCover({ item, loading }: { item: Item; loading?: 'lazy' }) {
   </>;
 }
 
-function EpisodeCard({ item, direction = '', showDate = false, compact = false }: {
-  item: Item; direction?: string; showDate?: boolean; compact?: boolean;
+function EpisodeCard({ item, direction = '', showDate = false }: {
+  item: Item; direction?: string; showDate?: boolean;
 }) {
   const video = item.format === 'video';
   return <a className="music-card episode-card" href={href('detail', item.id, direction)}>
@@ -56,20 +66,21 @@ function EpisodeCard({ item, direction = '', showDate = false, compact = false }
     <div className="episode-card__copy">
       <div className="episode-card__meta">
         <span>{video ? 'Видео' : 'Аудио'}</span>
-        {!compact && item.duration && <span>{item.duration}</span>}
+        {!showDate && item.duration && <span>{item.duration}</span>}
       </div>
       <h3>{item.title}</h3>
-      {!compact && <p>{showDate && item.guest ? `В гостях — ${item.guest}` : item.subtitle}</p>}
+      {!showDate && <p>{item.subtitle}</p>}
       {showDate && item.airedAt && <time dateTime={item.airedAt}>{formatBroadcastDate(item.airedAt)}</time>}
     </div>
   </a>;
 }
 
-function MediaCard({ item, direction = '', showMeta = true, fromPrograms = false }: {
-  item: Item; direction?: string; showMeta?: boolean; fromPrograms?: boolean;
+function MediaCard({ item, direction = '', showMeta = true, fromCatalog, guestSpecialty }: {
+  item: Item; direction?: string; showMeta?: boolean; fromCatalog?: MusicRoute['fromCatalog']; guestSpecialty?: string;
 }) {
   if (item.type === 'episode') return <EpisodeCard item={item} direction={direction}/>;
-  return <a className={'music-card music-card--' + item.type} href={fromPrograms ? programDetailHref(item.id) : href('detail', item.id, direction)}>
+  const catalog = item.type === 'guest' ? 'guests' : fromCatalog;
+  return <a className={'music-card music-card--' + item.type} href={catalog ? stationProfileHref(item.id, catalog, guestSpecialty) : href('detail', item.id, direction)}>
     <div className="music-card__art">
       <MusicCover item={item} loading="lazy"/>
     </div>
@@ -107,7 +118,7 @@ function Shelf({ title, script, list, more, previewLimit, direction = '', trimPr
 }) {
   if (!list.length) return null;
   const type = list[0].type;
-  const desktopColumns = sections.find((section) => section.id === type)?.desktopColumns;
+  const desktopColumns = type === 'guest' ? guestSection.desktopColumns : sections.find((section) => section.id === type)?.desktopColumns;
   const preview = more ? list.slice(0, previewLimit ?? desktopColumns) : list;
   return <ShelfSection title={title} script={script} more={preview.length < list.length ? more : undefined}>
     <div className={type === 'episode' ? 'episode-grid' : 'music-shelf'}
@@ -118,28 +129,33 @@ function Shelf({ title, script, list, more, previewLimit, direction = '', trimPr
   </ShelfSection>;
 }
 
-function EpisodeList({ title, episodes, direction, compact = false }: {
-  title: string; episodes: Item[]; direction: string; compact?: boolean;
+function EpisodeList({ title, episodes, direction }: {
+  title: string; episodes: Item[]; direction: string;
 }) {
   if (!episodes.length) return null;
   return <ShelfSection title={title}>
     <ul className="episode-grid" role="list">
       {episodes.map((episode) => <li key={episode.id}>
-        <EpisodeCard item={episode} direction={direction} showDate compact={compact}/>
+        <EpisodeCard item={episode} direction={direction} showDate/>
       </li>)}
     </ul>
   </ShelfSection>;
 }
 
-function EpisodeRelatedSections({ item, program, guest, direction }: { item: Item; program?: Item; guest?: Item; direction: string }) {
+function episodePeople(episode: Item) {
+  return [
+    ...pick(episode.guestIds ?? []).filter((entry) => entry.type === 'guest'),
+    ...pick(episode.related ?? []).filter((entry) => entry.type === 'artist'),
+  ];
+}
+
+function EpisodeRelatedSections({ item, program, direction }: { item: Item; program?: Item; direction: string }) {
   const related = pick(item.related ?? []);
-  const artists = related.filter((entry) => entry.type === 'artist' && entry.id !== guest?.id);
-  if (guest) artists.unshift(guest);
 
   return <>
     {program && <EpisodeList title="Другие выпуски" episodes={pick((programs[program.id]?.episodes ?? []).filter((id) => id !== item.id))} direction={direction}/>}
     <Shelf title="Читайте также" list={related.filter((entry) => entry.type === 'article')} direction={direction}/>
-    <Shelf title="Артисты и гости" list={artists} direction={direction}/>
+    <Shelf title="Артисты и гости" list={episodePeople(item)} direction={direction}/>
   </>;
 }
 
@@ -151,10 +167,28 @@ function RelatedSections({ item, direction }: { item: Item; direction: string })
   ));
 }
 
-function Directions({ selected }: { selected?: string }) {
+type FilterOption = {
+  id: string;
+  title: string;
+  href: string;
+  previews: { image: string; position?: string; scale?: number; translate?: string }[];
+};
+
+const musicDirectionOptions: FilterOption[] = [allMusicDirection, ...directions].map((option) => ({
+  ...option, href: option.id ? href('direction', option.id) : href(),
+}));
+const guestOptions: FilterOption[] = ['', ...guestSpecialties].map((specialty) => ({
+  id: specialty,
+  title: specialty ? guestSpecialtyLabels[specialty] ?? specialty : 'Все гости',
+  href: guestCatalogHref(specialty),
+  previews: (specialty ? guestProfiles.filter((item) => item.subtitle === specialty).slice(0, 1) : guestProfiles.slice(0, 2))
+    .map(({ image }) => ({ image })),
+}));
+
+function FilterChips({ options, selected, label, className = '' }: {
+  options: FilterOption[]; selected: string; label: string; className?: string;
+}) {
   const navigation = useRef<HTMLElement>(null);
-  const filtering = selected !== undefined;
-  const options = filtering ? [allMusicDirection, ...directions] : directions;
 
   useEffect(() => {
     const rail = navigation.current;
@@ -165,30 +199,19 @@ function Directions({ selected }: { selected?: string }) {
     const padding = parseFloat(getComputedStyle(rail).scrollPaddingInlineStart) || 0;
     const start = chipBounds.left - railBounds.left - padding;
     const end = chipBounds.right - railBounds.right + padding;
-    if (start < 0 || end > 0) rail.scrollBy({ left: start < 0 ? start : end, behavior: 'instant' });
+    if (start < 0 || end > 0) rail.scrollBy({ left: start, behavior: 'instant' });
   }, [selected]);
 
-  return <nav ref={navigation} className={`directions ${filtering ? 'directions--switcher' : 'directions--portraits'}`} aria-label="Музыкальные направления">
-    {options.map(({ id, title, short, previews }) => <a key={id} className="direction-tile"
-      href={id ? href('direction', id) : href()} aria-current={selected === id ? 'true' : undefined}>
+  return <nav ref={navigation} className={`directions--switcher ${className}`} aria-label={label}>
+    {options.map(({ id, title, previews, href }) => <a key={id} className="direction-tile"
+      href={href} aria-current={selected === id ? 'true' : undefined}>
       <span className="direction-portraits">
         {previews.map(({ image, position, scale, translate }) => <span className="direction-portraits__frame" key={image}>
           <img src={asset(image)} alt="" decoding="async" style={{ objectPosition: position, scale, translate }}/>
         </span>)}
       </span>
-      <span className="direction-label"><strong>{title}</strong>{!filtering && <small>{short}</small>}</span>
+      <span className="direction-label"><strong>{title}</strong></span>
     </a>)}
-  </nav>;
-}
-
-function OtherDirections({ active }: { active: string }) {
-  return <nav className="music-section other-directions" aria-labelledby="other-directions-title">
-    <h2 id="other-directions-title">Другие направления</h2>
-    <ul>
-      {directions.filter(({ id }) => id !== active).map(({ id, title }) => <li key={id}>
-        <a className="button button--tertiary" href={href('direction', id)}>{title}<Icon name="chevron-right"/></a>
-      </li>)}
-    </ul>
   </nav>;
 }
 
@@ -376,13 +399,14 @@ function getEpisodePreviewLimit() {
   return 2;
 }
 
-export function Music({ route, recordings, filterDirections }: {
+export function Music({ route, recordings, filtersBelowTitle }: {
   route: MusicRoute;
   recordings: RecordingState;
-  filterDirections: boolean;
+  filtersBelowTitle: boolean;
 }) {
   const [format, setFormat] = useState('');
   const [guest, setGuest] = useState('');
+  const guestList = useRef<HTMLDivElement>(null);
   const [episodePreviewLimit, setEpisodePreviewLimit] = useState(getEpisodePreviewLimit);
   useEffect(() => {
     const update = () => setEpisodePreviewLimit(getEpisodePreviewLimit());
@@ -392,49 +416,69 @@ export function Music({ route, recordings, filterDirections }: {
   const direction = directions.find((entry) => entry.id === route.direction);
   const directionId = direction?.id ?? '';
   const item = byId(route.id);
-  const section = sections.find((entry) => entry.id === route.id);
+  const section = route.id === 'guest' ? guestSection : sections.find((entry) => entry.id === route.id);
   const programsCatalog = route.page === 'catalog' && section?.id === 'program';
+  const guestsCatalog = isGuestCatalog(route);
+  const guestFilter = guestOptions.find((option) => option.id === route.guestSpecialty) ?? guestOptions[0];
+  const guestSpecialty = guestFilter.id;
+  useEffect(() => {
+    guestList.current?.scrollTo({ left: 0, behavior: 'instant' });
+  }, [guestSpecialty]);
+  const stationCatalog = programsCatalog ? 'programs' : guestsCatalog ? 'guests' : undefined;
   const all = direction ? items.filter((entry) => entry.direction === direction.title || entry.extraDirections?.includes(direction.title)) : items;
   const overview = direction ? all : all.filter((entry) => !featuredIds[entry.type] || featuredIds[entry.type].includes(entry.id));
   const showOverview = route.page === 'home' || (isMusicOverview(route) && direction !== undefined);
   const directionPage = route.page === 'direction';
-  const filterOverview = filterDirections && showOverview;
   const editorPicks = pick(editorialIds).filter((entry) => all.includes(entry));
   const allArticles = all.filter((entry) => entry.type === 'article');
   const otherArticles = direction ? allArticles.filter((entry) => !editorPicks.includes(entry)) : [];
 
   const audio = (clip: Clip) => <ClipButton clip={clip} current={recordings.current} playing={recordings.playing} play={recordings.play}/>;
   const filterRecords = all.filter((entry) => entry.type === 'episode');
-  const guests = [...new Set(filterRecords.flatMap((entry) => entry.guest ? [entry.guest] : []))];
-  const catalog = all.filter((entry) => entry.type === route.id && (!format || entry.format === format) && (!guest || entry.guest === guest));
+  const guests = pick([...new Set(filterRecords.flatMap((entry) => entry.guestIds ?? []))]).filter((entry) => entry.type === 'guest');
+  const catalog = guestsCatalog
+    ? guestProfiles.filter((entry) => !guestSpecialty || entry.subtitle === guestSpecialty)
+    : all.filter((entry) => entry.type === route.id && (!format || entry.format === format) && (!guest || entry.guestIds?.includes(guest)));
   const programme = item && programs[item.id];
+  const programmeEpisodes = programme ? pick(programme.episodes) : [];
+  const programmePeople = pick([...new Set(programmeEpisodes.flatMap(episodePeople).map((person) => person.id))]);
   const isRelease = item?.type === 'release';
   const isEpisode = item?.type === 'episode';
   const episodeProgramId = item && episodePrograms[item.id];
   const episodeProgram = episodeProgramId ? byId(episodeProgramId) : undefined;
-  const guestProfile = item?.guest ? items.find((entry) => entry.type === 'artist' && entry.title === item.guest) : undefined;
+  const episodeGuests = pick(item?.guestIds ?? []).filter((entry) => entry.type === 'guest');
+  const guestEpisodes = item?.type === 'guest' ? items.filter((entry) => entry.guestIds?.includes(item.id)) : [];
+  const profileRelated = pick([...new Set([
+    ...(item?.related ?? []),
+    ...guestEpisodes.flatMap((episode) => [episode.id, episodePrograms[episode.id]].filter(Boolean)),
+  ])]);
   const articlePage = route.page === 'detail' && item?.type === 'article';
-  const breadcrumbs = !isMusicOverview(route) && !programsCatalog && <nav className="breadcrumbs" aria-label="Хлебные крошки">
-    <a href={route.fromPrograms ? programsHref : href()}>{route.fromPrograms ? 'Программы' : 'Музыка'}</a><span aria-hidden="true">/</span>
+  const parent = route.fromCatalog === 'guests' ? { href: guestCatalogHref(guestSpecialty), label: 'Гости' }
+    : route.fromCatalog === 'programs' ? { href: programsHref, label: 'Программы' }
+    : { href: href(), label: 'Музыка' };
+  const breadcrumbs = !isMusicOverview(route) && !stationCatalog && <nav className="breadcrumbs" aria-label="Хлебные крошки">
+    <a href={parent.href}>{parent.label}</a><span aria-hidden="true">/</span>
     {direction && <><a href={href('direction', directionId)}>{direction.title}</a><span aria-hidden="true">/</span></>}
-    <span aria-current="page">{route.page === 'catalog' ? [section?.title, section?.script].filter(Boolean).join(' ') : item && (route.fromPrograms ? item.title : typeNames[item.type])}</span>
+    <span aria-current="page">{route.page === 'catalog' ? [section?.title, section?.script].filter(Boolean).join(' ') : item && (route.fromCatalog ? item.title : typeNames[item.type])}</span>
   </nav>;
-  const rubricHeading = directionPage ? direction : undefined;
+  const rubricHeading = !filtersBelowTitle && directionPage ? direction : undefined;
   const overviewTitle = rubricHeading?.title ?? 'Музыкальный мир РИФ FM';
   const scriptStart = rubricHeading ? overviewTitle.lastIndexOf(' ') + 1 : overviewTitle.indexOf('РИФ FM');
+  const musicChips = <FilterChips options={musicDirectionOptions} selected={directionId} label="Музыкальные направления"/>;
+  const guestChips = guestsCatalog && <FilterChips options={guestOptions} selected={guestSpecialty}
+    label="Фильтр гостей по типу деятельности" className="directions--guests"/>;
 
   return (
-    <main className={`container music-main music-main--${route.page}${programsCatalog ? ' music-main--programs' : ''}${filterOverview ? ' music-main--with-filters' : ''}`} id="music-content" tabIndex={-1}>
+    <main className={`container music-main music-main--${route.page}${stationCatalog ? ' music-main--station-catalog' : ''}`} id="music-content" tabIndex={-1}>
       {!articlePage && breadcrumbs}
 
       {showOverview && <>
-        {filterOverview && <Directions selected={directionId}/>}
-        {directionPage && !filterOverview && <a className="button button--tertiary music-back" href={href()}><Icon name="chevron-down"/>Вся музыка</a>}
+        {!filtersBelowTitle && musicChips}
         <header className="music-title">
           <Heading first={overviewTitle.slice(0, scriptStart).trimEnd()} script={overviewTitle.slice(scriptStart)} level={1}/>
-          <p>{rubricHeading?.description ?? 'Здесь мы собрали альбомы, истории об исполнителях и записи наших передач. Можно начать с прослушивания любимой песни, а можно найти что-то, чего раньше не слышали.'}</p>
+          <p className={rubricHeading ? 'music-title__direction-description' : undefined}>{rubricHeading?.description ?? 'Здесь мы собрали альбомы, истории об исполнителях и записи наших передач. Можно начать с прослушивания любимой песни, а можно найти что-то, чего раньше не слышали.'}</p>
         </header>
-        {!filterOverview && !directionPage && <Directions/>}
+        {filtersBelowTitle && musicChips}
         <CoverFeature list={editorPicks} totalArticles={allArticles.length} direction={directionId}/>
         {sections.map((group) => <Shelf key={group.id} title={group.title} script={group.script}
           list={group.id === 'article' ? otherArticles : overview.filter((entry) => entry.type === group.id)}
@@ -442,18 +486,24 @@ export function Music({ route, recordings, filterDirections }: {
           more={group.id !== 'article' && hasCatalog(group.id) ? { href: href('catalog', group.id, directionId), label: catalogLabels[group.id] } : undefined}
           previewLimit={group.id === 'episode' ? episodePreviewLimit : undefined}
           trimPreview={!direction}/>)}
-        {directionPage && !filterOverview && <OtherDirections active={directionId}/>}
       </>}
 
       {route.page === 'catalog' && section && <>
-        <header className="music-title"><Heading first={programsCatalog ? 'Наши' : section.title} script={section.script} level={1} size={programsCatalog ? 1 : 2}/></header>
+        {!filtersBelowTitle && guestChips}
+        <header className="music-title">
+          {guestsCatalog && guestSpecialty && !filtersBelowTitle
+            ? <Heading first={guestFilter.title} script="" level={1}/>
+            : <Heading first={programsCatalog ? 'Наши' : section.title} script={section.script} level={1} size={stationCatalog ? 1 : 2}/>}
+        </header>
+        {filtersBelowTitle && guestChips}
         {section.id === 'episode' && <div className="playlist-filters catalog-filters" role="group" aria-label="Фильтры записей эфиров">
           <PlaylistFilter id="recordings-format" label="Формат" value={format} options={formatOptions} onChange={setFormat}/>
           <PlaylistFilter id="recordings-guest" label="Гость" value={guest}
-            options={[{ id: '', label: 'Все гости' }, ...guests.map(name => ({ id: name, label: name }))]} onChange={setGuest}/>
+            options={[{ id: '', label: 'Все гости' }, ...guests.map(({ id, title }) => ({ id, label: title }))]} onChange={setGuest}/>
         </div>}
-        {catalog.length ? <div className={section.id === 'episode' ? 'catalog-grid episode-grid' : 'catalog-grid music-shelf'} data-desktop-columns={section.desktopColumns}>
-          {catalog.map((entry) => <MediaCard key={entry.id} item={entry} direction={directionId} fromPrograms={programsCatalog}/>)}
+        {catalog.length ? <div className={section.id === 'episode' ? 'catalog-grid episode-grid' : 'catalog-grid music-shelf'}
+          ref={guestsCatalog ? guestList : undefined} data-desktop-columns={section.desktopColumns}>
+          {catalog.map((entry) => <MediaCard key={entry.id} item={entry} direction={directionId} fromCatalog={stationCatalog} guestSpecialty={guestSpecialty}/>)}
         </div> : <div className="empty">
           <h2>Материалы не найдены</h2>
           {section.id === 'episode' && (format || guest) && <Button variant="secondary" onClick={() => { setFormat(''); setGuest(''); }}>Сбросить фильтры</Button>}
@@ -479,11 +529,11 @@ export function Music({ route, recordings, filterDirections }: {
                 <div className="hosts__names"><span>Ведущий</span><strong>{programme.host}</strong></div>
               </div>}
               {isRelease && <a className="button button--primary button--m" href={searchMusic(item.subtitle + ' ' + item.title)} target="_blank" rel="noreferrer">Открыть в Яндекс Музыке</a>}
-              {isEpisode && (item.host || item.guest) && <div className="episode-credits">
+              {isEpisode && (item.host || episodeGuests.length > 0) && <div className="episode-credits">
                 {item.host && <div className="credit"><Avatar src={asset('host.png')} name={item.host}/><span>Ведущий<strong>{item.host}</strong></span></div>}
-                {item.guest && <a className="credit" href={guestProfile && href('detail', guestProfile.id, directionId)}>
-                  <Avatar src={guestProfile && asset(guestProfile.image)} name={item.guest}/><span>Гость<strong>{item.guest}</strong></span>
-                </a>}
+                {episodeGuests.map((person) => <a className="credit" key={person.id} href={stationProfileHref(person.id, 'guests')}>
+                  <Avatar src={asset(person.image)} name={person.title}/><span>Гость<strong>{person.title}</strong></span>
+                </a>)}
               </div>}
             </div>
           </header>
@@ -494,14 +544,14 @@ export function Music({ route, recordings, filterDirections }: {
           </section>}
         </>}
         {programme ? <>
-          <EpisodeList title="Последние выпуски" episodes={pick(programme.episodes)} direction={directionId} compact/>
-          <Shelf title="Гости программы" list={pick(programme.guests)} direction={directionId}/>
+          <EpisodeList title="Последние выпуски" episodes={programmeEpisodes} direction={directionId}/>
+          <Shelf title="Артисты и гости" list={programmePeople} direction={directionId}/>
           <Shelf title="Статьи, новости и подборки" list={pick(programme.reads)} direction={directionId}/>
-        </> : isEpisode ? <EpisodeRelatedSections item={item} program={episodeProgram} guest={guestProfile} direction={directionId}/> : item.type === 'artist' ? <>
-          <Shelf title="Новости и статьи" list={pick(item.related ?? []).filter((entry) => entry.type === 'article')} direction={directionId}/>
-          <Shelf title="Записи эфиров" list={pick(item.related ?? []).filter((entry) => entry.type === 'episode')} direction={directionId}/>
-          <Shelf title="Музыка артиста" list={pick(item.related ?? []).filter((entry) => entry.type === 'release')} direction={directionId}/>
-          <Shelf title="Программы" list={pick(item.related ?? []).filter((entry) => entry.type === 'program')} direction={directionId}/>
+        </> : isEpisode ? <EpisodeRelatedSections item={item} program={episodeProgram} direction={directionId}/> : (item.type === 'artist' || item.type === 'guest') ? <>
+          <Shelf title="Новости и статьи" list={profileRelated.filter((entry) => entry.type === 'article')} direction={directionId}/>
+          <Shelf title="Записи эфиров" list={profileRelated.filter((entry) => entry.type === 'episode')} direction={directionId}/>
+          {item.type === 'artist' && <Shelf title="Музыка артиста" list={profileRelated.filter((entry) => entry.type === 'release')} direction={directionId}/>}
+          <Shelf title="Программы" list={profileRelated.filter((entry) => entry.type === 'program')} direction={directionId}/>
         </> : <RelatedSections item={item} direction={directionId}/>}
       </>}
 

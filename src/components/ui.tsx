@@ -27,7 +27,7 @@ export function Avatar({ src, name }: { src?: string; name: string }) {
 }
 
 export function Hosts() {
-  return <div className="hosts"><div className="hosts__avatars"><Avatar src={asset('host.png')} name="Игорь Федоров" /><Avatar src={asset('guest-mikhail-portrait.jpg')} name="Михаил Александров" /></div>
+  return <div className="hosts"><div className="hosts__avatars"><Avatar src={asset('host.png')} name="Игорь Федоров" /><Avatar src={asset('guest-mikhail.webp')} name="Михаил Александров" /></div>
     <div className="hosts__names"><strong>Игорь Федоров</strong><span>В гостях: Михаил Александров</span></div>
   </div>;
 }
